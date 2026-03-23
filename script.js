@@ -23,29 +23,35 @@ const MASTER_DATA = {
 };
 
 /**
- * キャラクター選択処理
+ * キャラクター選択処理 (windowに登録してHTMLから見えるようにする)
  */
-function selectChar(id) {
-    console.log("Selected operative ID:", id); // デバッグ用
+window.selectChar = function(id) {
+    console.log("--- Click detected for ID: " + id + " ---");
 
-    // すでにこのラウンドで動いたキャラは選択不可
+    // 1. ロックの確認
     if (movedChars.includes(id)) {
-        console.log(id + " is already moved in this round.");
+        console.warn(id + " は使用済み（LOCKED）です。");
         return;
     }
 
+    // 2. IDの保持
     selectedCharId = id;
-    
-    // UI反映
-    document.querySelectorAll('.char-btn').forEach(btn => btn.classList.remove('active'));
-    const activeBtn = document.getElementById(`btn-${id}`);
-    if (activeBtn) {
-        activeBtn.classList.add('active');
+
+    // 3. UIの更新（クラスの付け外し）
+    const allButtons = document.querySelectorAll('.char-btn');
+    allButtons.forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    const targetBtn = document.getElementById('btn-' + id);
+    if (targetBtn) {
+        targetBtn.classList.add('active');
+        console.log("Class 'active' successfully added to: btn-" + id);
     }
-}
+};
 
 /**
- * 探索実行
+ * 探索実行も同様に登録
  */
 async function executeInvestigate(locName) {
     if (!selectedCharId) {
