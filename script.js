@@ -171,7 +171,7 @@ function endFirstPhase() {
         finalHtml = "<div style='color:var(--error-red); text-align:center;'><h2>MISSION FAILED</h2><p>エンジニア：ノアによる「脱出ポッド」での逃亡を確認。<br>外部ハッチの爆破により船体構造が崩壊しました。</p></div>";
         setTimeout(() => { location.href = "badend1.html"; }, 5000);
     } else {
-        finalHtml = "<div style='color:var(--warning-yellow); text-align:center;'><h2>PHASE 01 COMPLETE</h2><p>全要員の報告を完了。船内ログに重大な矛盾が検出されました。<br>これより「第ニフェーズ：個別尋問」を開始します。</p></div>";
+        finalHtml = "<div style='color:var(--warning-yellow); text-align:center;'><h2>PHASE 01 COMPLETE</h2><p>全要員の報告を完了。死体が発見されました。<br>これより「第ニフェーズ：個別尋問」を開始します。</p></div>";
         const btn = document.createElement('button');
         btn.className = "char-btn active";
         btn.style.justifyContent = "center";
