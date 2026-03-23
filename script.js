@@ -1,10 +1,10 @@
 let turn = 1;
 let selectedCharId = null;
-let lastCharId = null; // 連続制限用
+let lastCharId = null; // 連続使用制限用フラグ
 const inventory = new Set();
 let engineerLiedAboutPod = false;
 
-// 固定データ
+// 罪と嘘のマスターデータ
 const MASTER_DATA = {
     chars: {
         engineer: { name: "ノア", lieLoc: "脱出ポッド", lieMsg: "「ポッドに異常はありません。ハッチも閉まっています」", isCulprit: true },
@@ -21,77 +21,107 @@ const MASTER_DATA = {
     }
 };
 
-// キャラクター選択
+/**
+ * キャラクター選択処理
+ */
 function selectChar(id) {
+    // 休息中のキャラはクリック無効（ボタン側でも制御しているが念のため）
+    if (id === lastCharId) return;
+
     selectedCharId = id;
+    
+    // UI反映
     document.querySelectorAll('.char-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(`btn-${id}`).classList.add('active');
 }
 
-// 探索実行（メインロジック）
+/**
+ * UIの更新（休息中ラベルやボタン無効化の切り替え）
+ */
+function updateCharUI() {
+    const ids = ['engineer', 'captain', 'pilot', 'observer'];
+    ids.forEach(id => {
+        const btn = document.getElementById(`btn-${id}`);
+        const status = document.getElementById(`status-${id}`);
+        
+        if (id === lastCharId) {
+            btn.disabled = true;
+            btn.classList.remove('active');
+            status.innerText = "RECHARGING";
+            status.className = "status-label status-recharging";
+        } else {
+            btn.disabled = false;
+            status.innerText = "AVAILABLE";
+            status.className = "status-label status-available";
+        }
+    });
+}
+
+/**
+ * 探索実行
+ */
 async function executeInvestigate(locName) {
-    if (!selectedCharId) return alert("要員を選択してください");
-    if (selectedCharId === lastCharId) return alert("この要員は休息中です。別の要員を選択してください。");
-    if (turn > 5) return;
+    if (!selectedCharId) {
+        alert("要員を選択してください");
+        return;
+    }
 
     const log = document.getElementById('log-window');
     const char = MASTER_DATA.chars[selectedCharId];
     const loc = MASTER_DATA.locations[locName];
 
-    // ボタン無効化（連打防止）
-    toggleUI(false);
+    // 通信待機中はすべてのボタンをロック
+    toggleAllControls(false);
 
-    // 通信待機演出
     const loadingEntry = document.createElement('div');
     loadingEntry.className = "analyzing";
-    loadingEntry.innerHTML = `<hr>>> [SENDING COMMAND] ${char.name} を ${locName} へ派遣中...`;
+    loadingEntry.innerHTML = `>> [COMM_LINK_INITIATING] 指令を送信中... ${char.name} → ${locName}`;
     log.prepend(loadingEntry);
 
-    // 3秒間のウェイト
+    // 3秒の通信ラグ演出
     await new Promise(resolve => setTimeout(resolve, 3000));
 
     loadingEntry.classList.remove('analyzing');
+    loadingEntry.style.borderLeft = "2px solid var(--neon-green)";
+    loadingEntry.style.background = "rgba(0,255,65,0.05)";
     
     let resultMsg = "";
     if (char.lieLoc === locName) {
-        // 嘘をつく場合
+        // 嘘をつくケース
         resultMsg = `<span style="color:#fff;">[COMMS] ${char.name}: "${char.lieMsg}"</span>`;
         if (char.isCulprit) engineerLiedAboutPod = true;
     } else {
-        // 真実を発見した場合
-        resultMsg = `<span style="color:var(--neon-green);">[REPORT] ${char.name}: 「${locName}にて『${loc.item}』を確認。${loc.truth}」</span>`;
+        // 真実を発見するケース
+        resultMsg = `<span style="color:var(--neon-green);">[DATA] ${char.name}: 「${locName}にて『${loc.item}』を確保。${loc.truth}」</span>`;
         addInventory(loc.item, loc.truth);
     }
 
-    loadingEntry.innerHTML = `<hr><small>TURN ${turn}: ${char.name} → ${locName}</small><br>${resultMsg}`;
+    loadingEntry.innerHTML = `<small>T${turn}: ${char.name} 報告</small><br>${resultMsg}`;
 
     // 状態更新
     lastCharId = selectedCharId;
+    selectedCharId = null;
     turn++;
     
     if (turn > 5) {
         endFirstPhase();
     } else {
         document.getElementById('turn-count').innerText = turn;
-        selectedCharId = null; // 選択解除
-        toggleUI(true);
+        updateCharUI(); // ボタンの休息中表示を更新
+        document.querySelectorAll('.loc-btn').forEach(b => b.disabled = false); // 場所ボタンのみ復帰
     }
 }
 
-// UIの有効/無効切り替え
-function toggleUI(enable) {
-    document.querySelectorAll('.loc-btn').forEach(btn => btn.disabled = !enable);
-    document.querySelectorAll('.char-btn').forEach(btn => {
-        const id = btn.id.replace('btn-', '');
-        if (enable) {
-            btn.disabled = (id === lastCharId); // 前回の人は無効のまま
-        } else {
-            btn.disabled = true;
-        }
-        btn.classList.remove('active');
-    });
+/**
+ * 全ボタンのロック/解除
+ */
+function toggleAllControls(enable) {
+    document.querySelectorAll('.loc-btn, .char-btn').forEach(btn => btn.disabled = !enable);
 }
 
+/**
+ * インベントリへの追加
+ */
 function addInventory(name, detail) {
     if (inventory.has(name)) return;
     inventory.add(name);
@@ -99,31 +129,35 @@ function addInventory(name, detail) {
     const list = document.getElementById('evidence-list');
     if (inventory.size === 1) list.innerHTML = "";
     
-    const item = document.createElement('div');
-    item.className = "evidence-item";
-    item.innerHTML = `<strong>● ${name}</strong><p>${detail}</p>`;
-    list.appendChild(item);
+    const div = document.createElement('div');
+    div.className = "evidence-item";
+    div.innerHTML = `<strong>● ${name}</strong><p>${detail}</p>`;
+    list.appendChild(div);
 }
 
+/**
+ * 第一フェーズ終了判定
+ */
 function endFirstPhase() {
+    toggleAllControls(false); // 全操作終了
     const log = document.getElementById('log-window');
     let finalHtml = "";
 
-    // バッドエンド判定
+    // 失敗判定：犯人にポッドで嘘をつかせ、かつ誰も死体を見つけていない
     if (engineerLiedAboutPod && !inventory.has("医師の遺体")) {
-        finalHtml = "<h2 style='color:red; text-align:center;'>CRITICAL ERROR</h2><p>エンジニアがポッドで脱出しました。船体は大破し、ミッションは失敗しました。</p>";
-        setTimeout(() => { location.href = "badend1.html"; }, 4000);
+        finalHtml = "<div style='color:var(--error-red); text-align:center;'><h2>MISSION FAILED</h2><p>エンジニア：ノアによる「脱出ポッド」での逃亡を確認。<br>外部ハッチの爆破により船体構造が崩壊しました。</p></div>";
+        setTimeout(() => { location.href = "badend1.html"; }, 5000);
     } else {
-        finalHtml = "<h2 style='color:var(--warning-yellow); text-align:center;'>PHASE 01 COMPLETE</h2><p>捜査エリアに重大な矛盾を確認。第二フェーズ：個別尋問へ移行します。</p>";
-        const nextBtn = document.createElement('button');
-        nextBtn.className = "char-btn active";
-        nextBtn.style.textAlign = "center";
-        nextBtn.innerText = ">> 尋問プロトコルを開始する";
-        nextBtn.onclick = () => location.href = "detective.html";
-        log.prepend(nextBtn);
+        finalHtml = "<div style='color:var(--warning-yellow); text-align:center;'><h2>PHASE 01 COMPLETE</h2><p>全要員の報告を完了。船内ログに重大な矛盾が検出されました。<br>これより「第ニフェーズ：個別尋問」を開始します。</p></div>";
+        const btn = document.createElement('button');
+        btn.className = "char-btn active";
+        btn.style.justifyContent = "center";
+        btn.innerText = ">> 尋問プロトコルを承認する";
+        btn.onclick = () => location.href = "detective.html";
+        log.prepend(btn);
     }
     
-    const endDiv = document.createElement('div');
-    endDiv.innerHTML = `<hr>${finalHtml}`;
-    log.prepend(endDiv);
+    const endContainer = document.createElement('div');
+    endContainer.innerHTML = `<hr>${finalHtml}`;
+    log.prepend(endContainer);
 }
