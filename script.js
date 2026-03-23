@@ -4,7 +4,7 @@ let movedChars = [];
 let usedLocations = []; 
 const inventory = new Set();
 let engineerLiedAboutPod = false;
-let bodyDiscovered = false; // 医師の遺体を発見したかどうかのフラグ
+let bodyDiscovered = false; 
 
 const MASTER_DATA = {
     chars: {
@@ -16,9 +16,9 @@ const MASTER_DATA = {
     locations: {
         "脱出ポッド": { item: "医師の遺体", truth: "後頭部に鈍器の痕。燃料計は空。このままじゃ燃料がなくて使えない。" },
         "操縦室": { item: "システムログの断片", truth: "燃料投棄ログが削除されている。" },
-        "倉庫": { item: "食料の入っていた袋", truth: "倉庫には食べ物も飲み物の何一つない。" },
-        "寝室": { item: "空の酒瓶", truth: "誰かがここで酒を飲んでいたみたいだ。この船に酒なんて積んでいないのに．．．" },
-        "トイレ": { item: "特殊グリスの汚れ", truth: "殺害現場。血が残っている。" }
+        "倉庫": { item: "食料の入っていた袋", truth: "倉庫には食べ物も飲み物も何一つない。備蓄されていたはずなのに…。" },
+        "寝室": { item: "空の酒瓶", truth: "誰かがここで酒を飲んでいたみたいだ。この船に酒なんて積んでいないのに……" },
+        "エンジンルーム": { item: "バイオ・コンバーターの稼働ログ", truth: "直近で大量の『有機燃料』が排出された記録。異様な死臭が漂っている。" }
     }
 };
 
@@ -45,21 +45,19 @@ async function executeInvestigate(locName) {
     
     let resultMsg = "";
 
-    // --- ロジック分岐開始 ---
+    // --- ロジック分岐 ---
     
-    // 1. トイレの特殊演出（誰が行っても同じ反応）
-    if (locName === "トイレ") {
-        resultMsg = `[REPORT] ${char.name}: 「トイレを調査。……妙ですね、不自然なほど綺麗に清掃されています。洗浄剤の匂いも鼻を突くほどに強すぎる……」`;
+    // 1. エンジンルームの特殊演出（全員共通）
+    if (locName === "エンジンルーム") {
+        resultMsg = `[REPORT] ${char.name}: 「エンジンルームを調査。……この最新の[バイオ・コンバーター]、様子がおかしいです。有機燃料が完全に空で、ログには強制排出の記録が。……それに、鼻を突くような死臭が漂っています。」`;
         addInventory(loc.item, loc.truth);
     } 
     // 2. エンジニアが脱出ポッドへ行く場合
     else if (char.isCulprit && locName === "脱出ポッド") {
         if (bodyDiscovered) {
-            // すでに死体が発見されている場合：嘘をつけない
-            resultMsg = `[REPORT] ${char.name}: 後頭部に鈍器の痕。燃料計は空。犯人が捨てた形跡がある。`;
+            resultMsg = `[REPORT] ${char.name}: 「……報告します。ポッド内に医師の遺体を確認。後頭部に鈍器のような痕があります。燃料計は……ゼロ。完全に空です。」`;
             addInventory(loc.item, loc.truth);
         } else {
-            // まだ発見されていない場合：嘘をついて脱出準備
             resultMsg = `<span style="color:#fff;">[COMMS] ${char.name}: "${char.lieMsg}"</span>`;
             engineerLiedAboutPod = true;
         }
@@ -71,13 +69,13 @@ async function executeInvestigate(locName) {
     // 4. 通常の発見
     else {
         resultMsg = `<span style="color:var(--neon-green);">[REPORT] ${char.name}: 「${locName}にて『${loc.item}』を確認。${loc.truth}」</span>`;
-        if (locName === "脱出ポッド") bodyDiscovered = true; // 死体発見フラグを立てる
+        if (locName === "脱出ポッド") bodyDiscovered = true;
         addInventory(loc.item, loc.truth);
     }
 
     loadingEntry.innerHTML = `<small>T${turn}: ${char.name} 報告</small><br>${resultMsg}`;
 
-    // --- 状態更新 ---
+    // 状態更新
     movedChars.push(selectedCharId);
     usedLocations.push(locName);
     selectedCharId = null;
@@ -90,6 +88,8 @@ async function executeInvestigate(locName) {
         refreshUI();
     }
 }
+
+/* 他の関数（refreshUI, toggleAllControls, addInventory, endFirstPhase）は変更なし */
 
 // refreshUI, toggleAllControls, addInventory, endFirstPhase は前回と同様
 // (インベントリに保存する部分を忘れずに)
