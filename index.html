@@ -2,32 +2,72 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>宇宙船殺人事件 - Prologue</title>
+    <title>Eclipse Deadline - Login</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* index専用の追加スタイル */
+        .login-box {
+            text-align: center;
+            margin-top: 50px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border: 1px solid #00ff41;
+            font-size: 0.8em;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+        .warning-text {
+            color: #ff0000;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>Mission: Deep Space</h1>
-        
-        <h2>【あらすじ】</h2>
-        <p>西暦2045年。火星からの帰還途中、宇宙船「ゼノビア号」のメインエンジンが突如停止した。
-           静まり返る船内。予備電源に切り替わった直後、通信室から悲鳴が上がる…。</p>
+        <header>
+            <div class="status-badge">COMMUNICATION LINK: ESTABLISHED</div>
+            <h1>PROJECT: ECLIPSE DEADLINE</h1>
+            <p style="text-align: center; opacity: 0.7;">Deep Space Exploration Vessel [ECLIPSE]</p>
+        </header>
 
-        <h2>【登場人物】</h2>
-        <div class="character-card">
-            <strong>● 船長：カイト</strong><br>
-            常に沈着冷静。今回のミッションのリーダー。
-        </div>
-        <div class="character-card">
-            <strong>● エンジニア：リン</strong><br>
-            機械整備の天才。少し気が弱いが責任感は強い。
-        </div>
-        <div class="character-card">
-            <strong>● 医務官：シロウ</strong><br>
-            皮肉屋だが腕は一流。過去の経歴には謎が多い。
-        </div>
+        <section class="character-intro">
+            <h2>【現時刻 船内生存者リスト】</h2>
+            
+            <div class="character-card">
+                <strong>● 船長：ハリス</strong>
+                <p>沈着冷静なリーダー。だが最近、通信記録に不自然な空白がある。</p>
+            </div>
 
-        <a href="select.html" class="start-link">>> 第一フェーズ：船内探索を開始する</a>
+            <div class="character-card">
+                <strong>● 操縦士：リク</strong>
+                <p>操縦の腕は超一流。倉庫のハッチのセキュリティを無断で書き換えた形跡あり。</p>
+            </div>
+
+            <div class="character-card">
+                <strong>● 観測員：メイ</strong>
+                <p>ハッキング技術に長けた天才。経歴書の一部に暗号化された偽装が見られる。</p>
+            </div>
+
+            <div class="character-card">
+                <strong>● エンジニア：ノア</strong>
+                <p>船の心臓部を知り尽くす男。今回の「事故」直後、真っ先に通信遮断を提案した。</p>
+            </div>
+        </section>
+
+        <div class="login-box">
+            <p>地上管制センター(GCC) 権限でアクセスしますか？</p>
+            <a href="prologue.html" class="start-link">>> 端末にログイン（物語を開始）</a>
+            
+            <p class="warning-text">※一度ログインすると、ミッション完了までログアウトできません。</p>
+        </div>
     </div>
 </body>
 </html>
