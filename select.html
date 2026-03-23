@@ -2,63 +2,50 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>探索フェーズ</title>
+    <title>GCC Terminal - Investigation</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .game-container { display: grid; grid-template-columns: 280px 1fr 280px; gap: 15px; width: 98%; height: 90vh; }
+        .panel { border: 1px solid #00ff41; background: rgba(0,20,0,0.8); padding: 15px; overflow-y: auto; }
+        .char-btn { width: 100%; padding: 10px; margin: 5px 0; background: transparent; color: #00ff41; border: 1px solid #00ff41; cursor: pointer; text-align: left; }
+        .char-btn.active { background: #00ff41; color: #000; }
+        .location-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .loc-btn { padding: 15px; background: rgba(0,255,65,0.1); color: #00ff41; border: 1px solid #00ff41; cursor: pointer; }
+        .loc-btn:hover { background: rgba(0,255,65,0.3); }
+        #log-window { height: 300px; border: 1px inset #00ff41; padding: 10px; margin-top: 15px; font-size: 0.85em; background: #000; overflow-y: auto; }
+        .evidence-item { font-size: 0.8em; margin: 5px 0; color: #ffff00; border-bottom: 1px solid #333; padding-bottom: 3px; }
+        .turn-display { font-size: 1.2em; color: #ffff00; text-align: center; margin-bottom: 10px; border: 1px solid #ffff00; }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>エリア探索</h1>
-        <p>誰に、どこを調べさせますか？</p>
-
-        <div style="margin-bottom: 20px;">
-            <label>キャラクター：</label>
-            <select id="charSelect">
-                <option value="kaito">カイト（船長）</option>
-                <option value="rin">リン（エンジニア）</option>
-                <option value="shirou">シロウ（医務官）</option>
-            </select>
+    <div class="game-container">
+        <div class="panel">
+            <h3>OPERATIVES</h3>
+            <button class="char-btn" onclick="selectChar('engineer', this)">エンジニア：ノア</button>
+            <button class="char-btn" onclick="selectChar('captain', this)">船長：ハリス</button>
+            <button class="char-btn" onclick="selectChar('pilot', this)">操縦士：リク</button>
+            <button class="char-btn" onclick="selectChar('observer', this)">観測員：メイ</button>
         </div>
 
-        <div class="tabs">
-            <button onclick="investigate('脱出ポッド')">脱出ポッド</button>
-            <button onclick="investigate('倉庫')">倉庫</button>
-            <button onclick="investigate('操縦室')">操縦室</button>
-            <button onclick="investigate('寝室')">寝室</button>
-            <button onclick="investigate('トイレ')">トイレ</button>
-        </div>
-
-        <div id="log" style="margin-top:30px; border-top: 1px solid #333; padding-top:20px;">
+        <div class="panel">
+            <div class="turn-display">TURN: <span id="turn-count">1</span> / 5 (SEARCH PHASE)</div>
+            <div class="location-grid">
+                <button class="loc-btn" onclick="executeInvestigate('脱出ポッド')">脱出ポッド</button>
+                <button class="loc-btn" onclick="executeInvestigate('操縦室')">操縦室</button>
+                <button class="loc-btn" onclick="executeInvestigate('倉庫')">倉庫</button>
+                <button class="loc-btn" onclick="executeInvestigate('寝室')">寝室</button>
+                <button class="loc-btn" onclick="executeInvestigate('トイレ')">トイレ</button>
             </div>
+            <div id="log-window">>> 管制システム起動。派遣する要員とエリアを選択してください。</div>
+        </div>
+
+        <div class="panel">
+            <h3>INVENTORY / EVIDENCE</h3>
+            <div id="evidence-list">
+                <p style="color:#666; font-size:0.7em;">取得済みデータなし</p>
+            </div>
+        </div>
     </div>
-
-    <script>
-        function investigate(location) {
-            const charName = document.getElementById('charSelect').options[document.getElementById('charSelect').selectedIndex].text;
-            const logDiv = document.getElementById('log');
-            
-            let message = "";
-            let nextUrl = "";
-
-            // 探索場所による分岐ロジック
-            switch(location) {
-                case '倉庫':
-                    message = `${charName}は暗い倉庫の扉を開けた。床には血痕があり、その先に誰かが倒れている…。<br><strong>【死体を発見しました】</strong>`;
-                    nextUrl = "detective.html";
-                    break;
-                case 'トイレ':
-                    message = `${charName}はトイレを調べたが、掃除が行き届いているだけだった。`;
-                    nextUrl = "badend1.html";
-                    break;
-                default:
-                    message = `${charName}は${location}を調べたが、特に異常は見当たらなかった。`;
-                    nextUrl = "badend1.html";
-            }
-
-            logDiv.innerHTML = `
-                <p>${message}</p>
-                <button onclick="location.href='${nextUrl}'">次へ進む</button>
-            `;
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
