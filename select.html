@@ -29,7 +29,6 @@
             overflow: hidden;
         }
 
-        /* 画面全体のスキャンライン演出 */
         body::after {
             content: " ";
             display: block;
@@ -61,7 +60,6 @@
 
         h3 { border-bottom: 1px solid var(--neon-green); padding-bottom: 8px; margin-top: 0; font-size: 1.1em; letter-spacing: 2px; }
 
-        /* キャラクター選択ボタンの改良 */
         .char-btn {
             width: 100%;
             padding: 15px;
@@ -88,14 +86,12 @@
         }
         .char-btn.active::before { content: "▶"; position: absolute; left: -25px; color: var(--neon-green); animation: blink 0.8s infinite; }
 
-        /* ステータスラベル */
         .status-label { font-size: 0.7em; padding: 2px 6px; border: 1px solid; border-radius: 2px; }
         .status-available { border-color: var(--neon-green); color: var(--neon-green); }
         .status-recharging { border-color: #555; color: #555; background: #111; }
 
         .char-btn:disabled { opacity: 0.4; cursor: not-allowed; border-color: #444; }
 
-        /* 探索場所ボタン */
         .location-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .loc-btn {
             padding: 18px;
@@ -109,7 +105,6 @@
         .loc-btn:hover:not(:disabled) { background: var(--neon-green); color: #000; }
         .loc-btn:disabled { opacity: 0.2; cursor: not-allowed; border-color: #333; }
 
-        /* ログウィンドウ */
         #log-window {
             flex-grow: 1;
             border: 1px inset var(--neon-green);
@@ -125,7 +120,6 @@
         .analyzing { animation: blink 1s infinite; color: var(--warning-yellow); text-align: center; padding: 10px; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-        /* インベントリ（証拠品）表示 */
         .evidence-item {
             margin-bottom: 15px;
             border-left: 3px solid var(--warning-yellow);
@@ -177,12 +171,12 @@
             <div class="turn-display">MISSION: T-<span id="turn-count">1</span> / 5</div>
             <h3>SECTOR SCANNER</h3>
             <div class="location-grid">
-    <button class="loc-btn" onclick="executeInvestigate('脱出ポッド')">脱出ポッド</button>
-    <button class="loc-btn" onclick="executeInvestigate('操縦室')">操縦室</button>
-    <button class="loc-btn" onclick="executeInvestigate('倉庫')">倉庫</button>
-    <button class="loc-btn" onclick="executeInvestigate('寝室')">寝室</button>
-    <button class="loc-btn" onclick="executeInvestigate('エンジンルーム')">エンジンルーム</button>
-</div>
+                <button class="loc-btn" onclick="executeInvestigate('脱出ポッド')">脱出ポッド</button>
+                <button class="loc-btn" onclick="executeInvestigate('操縦室')">操縦室</button>
+                <button class="loc-btn" onclick="executeInvestigate('倉庫')">倉庫</button>
+                <button class="loc-btn" onclick="executeInvestigate('寝室')">寝室</button>
+                <button class="loc-btn" onclick="executeInvestigate('エンジンルーム')">エンジンルーム</button>
+            </div>
             <div id="log-window">>> 待機中。左パネルより派遣要員を選択してください。</div>
         </div>
 
