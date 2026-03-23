@@ -1,8 +1,10 @@
 let turn = 1;
 let selectedCharId = null;
+let lastCharId = null; // 連続制限用
 const inventory = new Set();
 let engineerLiedAboutPod = false;
 
+// 固定データ
 const MASTER_DATA = {
     chars: {
         engineer: { name: "ノア", lieLoc: "脱出ポッド", lieMsg: "「ポッドに異常はありません。ハッチも閉まっています」", isCulprit: true },
@@ -19,73 +21,109 @@ const MASTER_DATA = {
     }
 };
 
-function selectChar(id, btn) {
+// キャラクター選択
+function selectChar(id) {
     selectedCharId = id;
-    document.querySelectorAll('.char-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    document.querySelectorAll('.char-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`btn-${id}`).classList.add('active');
 }
 
+// 探索実行（メインロジック）
 async function executeInvestigate(locName) {
     if (!selectedCharId) return alert("要員を選択してください");
+    if (selectedCharId === lastCharId) return alert("この要員は休息中です。別の要員を選択してください。");
     if (turn > 5) return;
 
     const log = document.getElementById('log-window');
     const char = MASTER_DATA.chars[selectedCharId];
     const loc = MASTER_DATA.locations[locName];
-    let resultMsg = "";
 
-    // 1. 嘘の判定
+    // ボタン無効化（連打防止）
+    toggleUI(false);
+
+    // 通信待機演出
+    const loadingEntry = document.createElement('div');
+    loadingEntry.className = "analyzing";
+    loadingEntry.innerHTML = `<hr>>> [SENDING COMMAND] ${char.name} を ${locName} へ派遣中...`;
+    log.prepend(loadingEntry);
+
+    // 3秒間のウェイト
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+    loadingEntry.classList.remove('analyzing');
+    
+    let resultMsg = "";
     if (char.lieLoc === locName) {
-        resultMsg = `[通信] ${char.name}: ${char.lieMsg}`;
+        // 嘘をつく場合
+        resultMsg = `<span style="color:#fff;">[COMMS] ${char.name}: "${char.lieMsg}"</span>`;
         if (char.isCulprit) engineerLiedAboutPod = true;
-    } 
-    // 2. 真実の発見
-    else {
-        resultMsg = `[報告] ${char.name}: 「${locName}にて『${loc.item}』を確保。${loc.truth}」`;
+    } else {
+        // 真実を発見した場合
+        resultMsg = `<span style="color:var(--neon-green);">[REPORT] ${char.name}: 「${locName}にて『${loc.item}』を確認。${loc.truth}」</span>`;
         addInventory(loc.item, loc.truth);
     }
 
-    // ログ更新
-    const entry = document.createElement('div');
-    entry.innerHTML = `<hr><small>T${turn}: ${char.name} → ${locName}</small><br>${resultMsg}`;
-    log.prepend(entry);
+    loadingEntry.innerHTML = `<hr><small>TURN ${turn}: ${char.name} → ${locName}</small><br>${resultMsg}`;
 
-    // ターン進行
+    // 状態更新
+    lastCharId = selectedCharId;
     turn++;
+    
     if (turn > 5) {
         endFirstPhase();
     } else {
         document.getElementById('turn-count').innerText = turn;
+        selectedCharId = null; // 選択解除
+        toggleUI(true);
     }
 }
 
+// UIの有効/無効切り替え
+function toggleUI(enable) {
+    document.querySelectorAll('.loc-btn').forEach(btn => btn.disabled = !enable);
+    document.querySelectorAll('.char-btn').forEach(btn => {
+        const id = btn.id.replace('btn-', '');
+        if (enable) {
+            btn.disabled = (id === lastCharId); // 前回の人は無効のまま
+        } else {
+            btn.disabled = true;
+        }
+        btn.classList.remove('active');
+    });
+}
+
 function addInventory(name, detail) {
+    if (inventory.has(name)) return;
     inventory.add(name);
+    
     const list = document.getElementById('evidence-list');
     if (inventory.size === 1) list.innerHTML = "";
     
-    const div = document.createElement('div');
-    div.className = "evidence-item";
-    div.innerHTML = `<strong>${name}</strong><br><small>${detail}</small>`;
-    list.appendChild(div);
+    const item = document.createElement('div');
+    item.className = "evidence-item";
+    item.innerHTML = `<strong>● ${name}</strong><p>${detail}</p>`;
+    list.appendChild(item);
 }
 
 function endFirstPhase() {
     const log = document.getElementById('log-window');
-    let finalMsg = "";
+    let finalHtml = "";
 
+    // バッドエンド判定
     if (engineerLiedAboutPod && !inventory.has("医師の遺体")) {
-        finalMsg = "<h2 style='color:red;'>GAME OVER</h2>エンジニアがポッドで脱出。船は崩壊しました。";
-        setTimeout(() => { location.href = "badend1.html"; }, 3000);
+        finalHtml = "<h2 style='color:red; text-align:center;'>CRITICAL ERROR</h2><p>エンジニアがポッドで脱出しました。船体は大破し、ミッションは失敗しました。</p>";
+        setTimeout(() => { location.href = "badend1.html"; }, 4000);
     } else {
-        finalMsg = "<h2 style='color:#ffff00;'>PHASE 01 COMPLETE</h2>死体または矛盾を発見しました。第二フェーズ（尋問）へ移行します。";
-        const btn = document.createElement('button');
-        btn.innerText = ">> 第二フェーズを開始する";
-        btn.className = "start-link";
-        btn.onclick = () => { location.href = "detective.html"; };
-        log.prepend(btn);
+        finalHtml = "<h2 style='color:var(--warning-yellow); text-align:center;'>PHASE 01 COMPLETE</h2><p>捜査エリアに重大な矛盾を確認。第二フェーズ：個別尋問へ移行します。</p>";
+        const nextBtn = document.createElement('button');
+        nextBtn.className = "char-btn active";
+        nextBtn.style.textAlign = "center";
+        nextBtn.innerText = ">> 尋問プロトコルを開始する";
+        nextBtn.onclick = () => location.href = "detective.html";
+        log.prepend(nextBtn);
     }
-    const endLog = document.createElement('div');
-    endLog.innerHTML = finalMsg;
-    log.prepend(endLog);
+    
+    const endDiv = document.createElement('div');
+    endDiv.innerHTML = `<hr>${finalHtml}`;
+    log.prepend(endDiv);
 }
