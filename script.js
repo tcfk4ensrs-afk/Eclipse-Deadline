@@ -58,7 +58,7 @@ function updateCharUI() {
 }
 
 /**
- * 探索実行
+ * 探索実行（修正版：特定の一人のみ休息、他は復帰）
  */
 async function executeInvestigate(locName) {
     if (!selectedCharId) {
@@ -70,52 +70,75 @@ async function executeInvestigate(locName) {
     const char = MASTER_DATA.chars[selectedCharId];
     const loc = MASTER_DATA.locations[locName];
 
-    // 通信待機中はすべてのボタンをロック
+    // --- 通信開始演出：すべての操作を一旦ロック ---
     toggleAllControls(false);
 
     const loadingEntry = document.createElement('div');
     loadingEntry.className = "analyzing";
-    loadingEntry.innerHTML = `>> [COMM_LINK_INITIATING] 指令を送信中... ${char.name} → ${locName}`;
+    loadingEntry.innerHTML = `>> [SENDING COMMAND] ${char.name} を ${locName} へ派遣中...`;
     log.prepend(loadingEntry);
 
-    // 3秒の通信ラグ演出
+    // 3秒待機
     await new Promise(resolve => setTimeout(resolve, 3000));
 
     loadingEntry.classList.remove('analyzing');
-    loadingEntry.style.borderLeft = "2px solid var(--neon-green)";
-    loadingEntry.style.background = "rgba(0,255,65,0.05)";
     
+    // --- 結果判定 ---
     let resultMsg = "";
     if (char.lieLoc === locName) {
-        // 嘘をつくケース
         resultMsg = `<span style="color:#fff;">[COMMS] ${char.name}: "${char.lieMsg}"</span>`;
         if (char.isCulprit) engineerLiedAboutPod = true;
     } else {
-        // 真実を発見するケース
-        resultMsg = `<span style="color:var(--neon-green);">[DATA] ${char.name}: 「${locName}にて『${loc.item}』を確保。${loc.truth}」</span>`;
+        resultMsg = `<span style="color:var(--neon-green);">[REPORT] ${char.name}: 「${locName}にて『${loc.item}』を確保。${loc.truth}」</span>`;
         addInventory(loc.item, loc.truth);
     }
-
     loadingEntry.innerHTML = `<small>T${turn}: ${char.name} 報告</small><br>${resultMsg}`;
 
-    // 状態更新
-    lastCharId = selectedCharId;
-    selectedCharId = null;
+    // --- 状態更新 ---
+    lastCharId = selectedCharId; // 今回派遣した人を記録
+    selectedCharId = null;       // 選択状態を解除
     turn++;
     
     if (turn > 5) {
         endFirstPhase();
     } else {
         document.getElementById('turn-count').innerText = turn;
-        updateCharUI(); // ボタンの休息中表示を更新
-        document.querySelectorAll('.loc-btn').forEach(b => b.disabled = false); // 場所ボタンのみ復帰
+        
+        // --- ここでロックを解除 ---
+        updateCharUI(); // キャラクターボタンの状態を更新（前回の人のみDisabledにする）
+        document.querySelectorAll('.loc-btn').forEach(btn => btn.disabled = false); // 場所ボタンをすべて有効化
     }
 }
 
 /**
- * 全ボタンのロック/解除
+ * キャラクターUIの更新（派遣した1人のみRECHARGINGにする）
+ */
+function updateCharUI() {
+    const ids = ['engineer', 'captain', 'pilot', 'observer'];
+    ids.forEach(id => {
+        const btn = document.getElementById(`btn-${id}`);
+        const status = document.getElementById(`status-${id}`);
+        
+        if (id === lastCharId) {
+            // 直前に動いたキャラだけをロック
+            btn.disabled = true;
+            btn.classList.remove('active');
+            status.innerText = "RECHARGING";
+            status.className = "status-label status-recharging";
+        } else {
+            // それ以外のキャラは解放
+            btn.disabled = false;
+            status.innerText = "AVAILABLE";
+            status.className = "status-label status-available";
+        }
+    });
+}
+
+/**
+ * すべてのボタンを一時的にロック/解除する
  */
 function toggleAllControls(enable) {
+    // 全場所ボタンと全キャラボタンを制御
     document.querySelectorAll('.loc-btn, .char-btn').forEach(btn => btn.disabled = !enable);
 }
 
