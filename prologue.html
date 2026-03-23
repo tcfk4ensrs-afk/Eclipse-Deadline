@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Eclipse Deadline - Prologue</title>
+    <style>
+        /* ベースは宇宙船の端末風（黒背景に緑文字） */
+        body {
+            background-color: #000;
+            color: #00ff41;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; /* スクロールバーを隠す */
+        }
+
+        /* 走査線エフェクト（雰囲気用） */
+        body::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 10;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        .terminal-container {
+            width: 80%;
+            max-width: 900px;
+            height: 80%;
+            border: 2px solid #00ff41;
+            padding: 40px;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+            position: relative;
+            overflow-y: auto; /* テキストが増えたらスクロール */
+        }
+
+        /* システムログ用のスタイル（無機質） */
+        .system-log {
+            color: #00ff41;
+            margin-bottom: 10px;
+        }
+
+        /* アラート用のスタイル（赤く点滅） */
+        .alert-log {
+            color: #ff0000;
+            font-weight: bold;
+            animation: blink 0.5s infinite;
+        }
+
+        /* 通信音声（テキスト）用のスタイル */
+        .comms-log {
+            color: #fff; /* 白文字で差別化 */
+            margin-top: 20px;
+            border-left: 3px solid #fff;
+            padding-left: 15px;
+        }
+
+        .comms-name {
+            font-weight: bold;
+            text-decoration: underline;
+        }
+
+        /* ミッション目的用のスタイル（黄色） */
+        .objective-box {
+            color: #ffff00;
+            border: 1px dashed #ffff00;
+            padding: 20px;
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        /* ゲーム開始リンク */
+        .start-link {
+            display: block;
+            margin-top: 30px;
+            text-align: center;
+            color: #ffff00;
+            text-decoration: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            opacity: 0; /* 最初は隠しておく */
+            transition: opacity 1s;
+        }
+
+        .start-link:hover {
+            text-shadow: 0 0 10px #ffff00;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        /* 画面全体のグリッチ（揺れ）演出用クラス */
+        .glitch {
+            animation: shake 0.3s;
+            animation-iteration-count: 2;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            50% { transform: translate(-1px, -1px) rotate(1deg); }
+            70% { transform: translate(1px, 2px) rotate(-1deg); }
+            100% { transform: translate(-1px, 1px) rotate(0deg); }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="terminal-container" id="terminal">
+        </div>
+
+    <script>
+        const terminal = document.getElementById('terminal');
+        const beepSound = document.getElementById('beepSound');
+        const alertSound = document.getElementById('alertSound');
+        const commsStatic = document.getElementById('commsStatic');
+
+        // シナリオデータ（タイピング速度とCSSクラスを指定）
+        const scenario = [
+            // 【Scene 1：システム起動】
+            { type: 'sys', text: '>> 地上管制センター（GCC）ターミナル 起動中...', speed: 50 },
+            { type: 'sys', text: '>> 深宇宙探査船 [エクリプス号] との通信リンクを確立...', speed: 50 },
+            { type: 'sys', text: '>> 現在位置：地球軌道外 45,000km', speed: 50 },
+            { type: 'sys', text: '>> ミッションステータス：帰還フェーズ（残り航行時間：18時間）', speed: 50 },
+            { type: 'sys', text: '>> 警告：微細な機体振動を確認。異常なし。', speed: 50, pause: 1000 },
+
+            // 【Scene 2：異常発生】
+            { type: 'alert', text: '\n[SYSTEM ALERT] 外部排気バルブ 強制開放を確認。', speed: 20, glitch: true },
+            { type: 'alert', text: '[SYSTEM ALERT] 第3区画 酸素濃度 急激に低下。', speed: 20 },
+            { type: 'alert', text: '[SYSTEM ALERT] 予備酸素マスク 展開。', speed: 20, pause: 1000 },
+
+            // 【Scene 3：管制官への呼びかけ】
+            { type: 'comms', name: '船長', text: '「……聞こえるか！地球（テラ）！こちらエクリプス号、船長のハリスだ！」', speed: 60 },
+            { type: 'comms', name: '船長', text: '「突如、酸素漏れが発生した！エンジニアは『システムの故障だ』と言い張っているが……バルブは内側から操作されている形跡がある。……それに、船医が見当たらないんだ。嫌な予感がする。」', speed: 60 },
+            { type: 'comms', name: 'エンジニア', text: '「おい！勝手に通信するな、今は修理が先だ！全員持ち場を動くな、いいな！」', speed: 40 },
+            { type: 'comms', name: '操縦士', text: '「ふざけるな！誰かが裏切り者をやってるんだろ！？」', speed: 40 },
+            { type: 'comms', name: '船長', text: '「落ち着け！……管制官、そっちの権限で船内のセンサーログを解析してくれ。誰をどこへ向かわせるべきか、指示を頼む。……10分後には大気圏突入だ。それまでにこの『毒』を洗い出さなきゃ、俺たちは燃え尽きることになる。」', speed: 60, pause: 1500 },
+
+            // 【Scene 4：ゲーム開始】
+            { type: 'obj', text: '\n[MISSION OBJECTIVE]\n\n1. 船内の調査を指示し、行方不明の医師を捜索せよ。\n2. 5ターン以内に「決定的な異常」を特定せよ。\n3. 犯人を特定し、船を救うための「犠牲」を選択せよ。', speed: 30 }
+        ];
+
+        // タイピング演出用のメイン関数
+        async function playScenario() {
+            for (const line of scenario) {
+                // 画面揺れ演出
+                if (line.glitch) {
+                    terminal.classList.add('glitch');
+                    setTimeout(() => terminal.classList.remove('glitch'), 500);
+                }
+
+                // アラート音などの制御（音源ファイルがある場合）
+                if (line.type === 'alert' && alertSound) alertSound.play();
+                if (line.type === 'comms' && commsStatic) commsStatic.play();
+
+                const p = document.createElement('p');
+                
+                // CSSクラスの割り当て
+                if (line.type === 'sys') p.className = 'system-log';
+                if (line.type === 'alert') p.className = 'alert-log';
+                if (line.type === 'comms') p.className = 'comms-log';
+                if (line.type === 'obj') p.className = 'objective-box';
+
+                terminal.appendChild(p);
+
+                // 名前がある場合は先に表示
+                if (line.name) {
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'comms-name';
+                    nameSpan.innerText = line.name + '：\n';
+                    p.appendChild(nameSpan);
+                }
+
+                // 一文字ずつタイピング
+                await typeText(line.text, p, line.speed);
+
+                // 行ごとの一時停止
+                if (line.pause) await wait(line.pause);
+                
+                // スクロールを一番下へ
+                terminal.scrollTop = terminal.scrollHeight;
+            }
+
+            // すべて終わったら開始リンクを表示
+            showStartLink();
+        }
+
+        // 文字をタイピングする補助関数
+        function typeText(text, element, speed) {
+            return new Promise(resolve => {
+                let i = 0;
+                function type() {
+                    if (i < text.length) {
+                        // 改行コードは <br> に変換
+                        if (text.charAt(i) === '\n') {
+                            element.innerHTML += '<br>';
+                        } else {
+                            element.innerHTML += text.charAt(i);
+                        }
+                        // ビープ音（音源ファイルがある場合）
+                        if (beepSound) {
+                            beepSound.currentTime = 0;
+                            beepSound.play();
+                        }
+                        i++;
+                        setTimeout(type, speed);
+                    } else {
+                        resolve();
+                    }
+                }
+                type();
+            });
+        }
+
+        function wait(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function showStartLink() {
+            // アラート音などを止める
+            if (alertSound) alertSound.pause();
+            
+            const link = document.createElement('a');
+            link.href = 'select.html'; // 第一フェーズへ
+            link.className = 'start-link';
+            link.innerText = '―― 通信を開始しますか？ [YES]';
+            link.style.opacity = 1; // フェードイン
+            terminal.appendChild(link);
+            
+            // 最後のスクロール
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        // ページロード後に少し待ってから開始
+        window.onload = () => {
+            setTimeout(playScenario, 1000);
+        };
+
+    </script>
+</body>
+</html>
