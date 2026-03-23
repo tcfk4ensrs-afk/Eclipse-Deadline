@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>探索フェーズ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>エリア探索</h1>
+        <p>誰に、どこを調べさせますか？</p>
+
+        <div style="margin-bottom: 20px;">
+            <label>キャラクター：</label>
+            <select id="charSelect">
+                <option value="kaito">カイト（船長）</option>
+                <option value="rin">リン（エンジニア）</option>
+                <option value="shirou">シロウ（医務官）</option>
+            </select>
+        </div>
+
+        <div class="tabs">
+            <button onclick="investigate('脱出ポッド')">脱出ポッド</button>
+            <button onclick="investigate('倉庫')">倉庫</button>
+            <button onclick="investigate('操縦室')">操縦室</button>
+            <button onclick="investigate('寝室')">寝室</button>
+            <button onclick="investigate('トイレ')">トイレ</button>
+        </div>
+
+        <div id="log" style="margin-top:30px; border-top: 1px solid #333; padding-top:20px;">
+            </div>
+    </div>
+
+    <script>
+        function investigate(location) {
+            const charName = document.getElementById('charSelect').options[document.getElementById('charSelect').selectedIndex].text;
+            const logDiv = document.getElementById('log');
+            
+            let message = "";
+            let nextUrl = "";
+
+            // 探索場所による分岐ロジック
+            switch(location) {
+                case '倉庫':
+                    message = `${charName}は暗い倉庫の扉を開けた。床には血痕があり、その先に誰かが倒れている…。<br><strong>【死体を発見しました】</strong>`;
+                    nextUrl = "detective.html";
+                    break;
+                case 'トイレ':
+                    message = `${charName}はトイレを調べたが、掃除が行き届いているだけだった。`;
+                    nextUrl = "badend1.html";
+                    break;
+                default:
+                    message = `${charName}は${location}を調べたが、特に異常は見当たらなかった。`;
+                    nextUrl = "badend1.html";
+            }
+
+            logDiv.innerHTML = `
+                <p>${message}</p>
+                <button onclick="location.href='${nextUrl}'">次へ進む</button>
+            `;
+        }
+    </script>
+</body>
+</html>
