@@ -175,7 +175,7 @@ function endFirstPhase() {
     let finalHtml = "";
 
     if (engineerLiedAboutPod && !bodyDiscovered) {
-        finalHtml = "<div style='color:var(--error-red); text-align:center;'><h2>MISSION FAILED</h2><p>ノアがポッドで逃亡。船体構造が崩壊しました。</p></div>";
+        finalHtml = "<div style='color:var(--error-red); text-align:center;'><h2>MISSION FAILED</h2><p>何者かが逃亡。船体構造が崩壊しました。</p></div>";
         setTimeout(() => { location.href = "badend1.html"; }, 5000);
     } else {
         finalHtml = "<div style='color:var(--warning-yellow); text-align:center;'><h2>PHASE 01 COMPLETE</h2><p>重大な矛盾を検出。個別尋問プロトコルを開始します。</p></div>";
