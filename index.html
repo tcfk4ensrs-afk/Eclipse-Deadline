@@ -5,28 +5,32 @@
     <title>Eclipse Deadline - Login</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* index専用の追加スタイル */
-        .login-box {
+        /* キャッチコピー用のドラマチックな演出 */
+        .catchphrase {
+            font-size: 1.5em;
+            color: #fff;
             text-align: center;
-            margin-top: 50px;
+            letter-spacing: 0.2em;
+            margin: 40px 0;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
         }
-        .status-badge {
-            display: inline-block;
-            padding: 5px 15px;
-            border: 1px solid #00ff41;
-            font-size: 0.8em;
-            margin-bottom: 20px;
-            animation: pulse 2s infinite;
+
+        .highlight-red { color: #ff0000; font-weight: bold; }
+
+        .intro-section {
+            background: rgba(0, 255, 65, 0.05);
+            border-left: 2px solid #00ff41;
+            padding: 20px;
+            margin: 30px 0;
+            line-height: 1.8;
+            font-size: 0.95em;
         }
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.4; }
-            100% { opacity: 1; }
-        }
-        .warning-text {
-            color: #ff0000;
-            font-size: 0.9em;
-            margin-top: 20px;
+
+        .mission-call {
+            text-align: center;
+            font-style: italic;
+            margin: 20px 0;
+            color: #00ff41;
         }
     </style>
 </head>
@@ -35,37 +39,32 @@
         <header>
             <div class="status-badge">COMMUNICATION LINK: ESTABLISHED</div>
             <h1>PROJECT: ECLIPSE DEADLINE</h1>
-            <p style="text-align: center; opacity: 0.7;">Deep Space Exploration Vessel [ECLIPSE]</p>
         </header>
+
+        <div class="catchphrase">
+            「救えるのは、<span style="color:#00ff41">4人</span>。殺すのは、<span class="highlight-red">2人</span>。」
+        </div>
+
+        <section class="intro-section">
+            <p>西暦20XX年。深宇宙探査船「エクリプス号」は、異星で発見された未知のエネルギー資源の座標データを携え、地球への帰還途上にあった。</p>
+            <p>平穏な航行は、突如として鳴り響いた<span class="highlight-red">「酸素漏れアラート」</span>によって破られる。</p>
+            <p>パニックに陥る乗組員たち。閉鎖されたブリッジ。そして、姿を消した船医――。</p>
+        </section>
+
+        <div class="mission-call">
+            ――地球まで45,000km。通信越しに、あなたは「命の選別」を命じられる。
+        </div>
 
         <section class="character-intro">
             <h2>【現時刻 船内生存者リスト】</h2>
-            
-            <div class="character-card">
-                <strong>● 船長：ハリス</strong>
-                <p>沈着冷静なリーダー。だが最近、通信記録に不自然な空白がある。</p>
-            </div>
-
-            <div class="character-card">
-                <strong>● 操縦士：リク</strong>
-                <p>操縦の腕は超一流。倉庫のハッチのセキュリティを無断で書き換えた形跡あり。</p>
-            </div>
-
-            <div class="character-card">
-                <strong>● 観測員：メイ</strong>
-                <p>ハッキング技術に長けた天才。経歴書の一部に暗号化された偽装が見られる。</p>
-            </div>
-
-            <div class="character-card">
-                <strong>● エンジニア：ノア</strong>
-                <p>船の心臓部を知り尽くす男。今回の「事故」直後、真っ先に通信遮断を提案した。</p>
-            </div>
+            <div class="character-card"><strong>● 船長：ハリス</strong> / 沈着冷静なリーダー。</div>
+            <div class="character-card"><strong>● 操縦士：リク</strong> / 操縦の腕は超一流。</div>
+            <div class="character-card"><strong>● 観測員：メイ</strong> / ハッキング技術に長けた天才。</div>
+            <div class="character-card"><strong>● エンジニア：ノア</strong> / 船の心臓部を知り尽くす男。</div>
         </section>
 
         <div class="login-box">
-            <p>地上管制センター(GCC) 権限でアクセスしますか？</p>
-            <a href="prologue.html" class="start-link">>> 端末にログイン（物語を開始）</a>
-            
+            <a href="prologue.html" class="start-link">>> 管制システムへログイン（物語を開始）</a>
             <p class="warning-text">※一度ログインすると、ミッション完了までログアウトできません。</p>
         </div>
     </div>
