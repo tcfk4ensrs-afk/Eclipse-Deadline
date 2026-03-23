@@ -1,11 +1,11 @@
 let turn = 1;
 let selectedCharId = null;
-let movedChars = []; // そのラウンドで動いた人を記録
-let usedLocations = []; // 探索済みの場所を記録
+let movedChars = []; 
+let usedLocations = []; 
 const inventory = new Set();
 let engineerLiedAboutPod = false;
+let bodyDiscovered = false; // 医師の遺体を発見したかどうかのフラグ
 
-// マスターデータ
 const MASTER_DATA = {
     chars: {
         engineer: { name: "ノア", lieLoc: "脱出ポッド", lieMsg: "「ポッドに異常はありません。ハッチも閉まっています」", isCulprit: true },
@@ -14,29 +14,14 @@ const MASTER_DATA = {
         observer: { name: "メイ", lieLoc: "操縦室", lieMsg: "「システムが不安定でログが見られないわ」" }
     },
     locations: {
-        "脱出ポッド": { item: "医師の遺体", truth: "後頭部に鈍器の痕。燃料計は空。" },
+        "脱出ポッド": { item: "医師の遺体", truth: "後頭部に鈍器の痕。燃料計は空。このままじゃ燃料がなくて使えない。" },
         "操縦室": { item: "システムログの断片", truth: "燃料投棄ログが削除されている。" },
-        "倉庫": { item: "異星の希少鉱石", truth: "操縦士が横流し用に隠していたもの。" },
-        "寝室": { item: "空の酒瓶", truth: "船長が事件時に泥酔していた証拠。" },
-        "トイレ": { item: "特殊グリスの汚れ", truth: "殺害現場。エンジニア用の油が残っている。" }
+        "倉庫": { item: "食料の入っていた袋", truth: "倉庫には食べ物も飲み物の何一つない。" },
+        "寝室": { item: "空の酒瓶", truth: "誰かがここで酒を飲んでいたみたいだ。この船に酒なんて積んでいないのに．．．" },
+        "トイレ": { item: "特殊グリスの汚れ", truth: "殺害現場。血が残っている。" }
     }
 };
 
-/**
- * キャラクター選択
- */
-function selectChar(id) {
-    // 休息中（すでにこのラウンドで動いた）なら無視
-    if (movedChars.includes(id)) return;
-
-    selectedCharId = id;
-    document.querySelectorAll('.char-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(`btn-${id}`).classList.add('active');
-}
-
-/**
- * 探索実行
- */
 async function executeInvestigate(locName) {
     if (!selectedCharId) {
         alert("要員を選択してください");
@@ -47,7 +32,6 @@ async function executeInvestigate(locName) {
     const char = MASTER_DATA.chars[selectedCharId];
     const loc = MASTER_DATA.locations[locName];
 
-    // --- 通信演出：全ロック ---
     toggleAllControls(false);
 
     const loadingEntry = document.createElement('div');
@@ -59,20 +43,43 @@ async function executeInvestigate(locName) {
 
     loadingEntry.classList.remove('analyzing');
     
-    // --- 結果判定 ---
     let resultMsg = "";
-    if (char.lieLoc === locName) {
+
+    // --- ロジック分岐開始 ---
+    
+    // 1. トイレの特殊演出（誰が行っても同じ反応）
+    if (locName === "トイレ") {
+        resultMsg = `[REPORT] ${char.name}: 「トイレを調査。……妙ですね、不自然なほど綺麗に清掃されています。洗浄剤の匂いも鼻を突くほどに強すぎる……」`;
+        addInventory(loc.item, loc.truth);
+    } 
+    // 2. エンジニアが脱出ポッドへ行く場合
+    else if (char.isCulprit && locName === "脱出ポッド") {
+        if (bodyDiscovered) {
+            // すでに死体が発見されている場合：嘘をつけない
+            resultMsg = `[REPORT] ${char.name}: 後頭部に鈍器の痕。燃料計は空。犯人が捨てた形跡がある。`;
+            addInventory(loc.item, loc.truth);
+        } else {
+            // まだ発見されていない場合：嘘をついて脱出準備
+            resultMsg = `<span style="color:#fff;">[COMMS] ${char.name}: "${char.lieMsg}"</span>`;
+            engineerLiedAboutPod = true;
+        }
+    }
+    // 3. その他のキャラが自分の「嘘の場所」に行く場合
+    else if (char.lieLoc === locName) {
         resultMsg = `<span style="color:#fff;">[COMMS] ${char.name}: "${char.lieMsg}"</span>`;
-        if (char.isCulprit) engineerLiedAboutPod = true;
-    } else {
+    }
+    // 4. 通常の発見
+    else {
         resultMsg = `<span style="color:var(--neon-green);">[REPORT] ${char.name}: 「${locName}にて『${loc.item}』を確認。${loc.truth}」</span>`;
+        if (locName === "脱出ポッド") bodyDiscovered = true; // 死体発見フラグを立てる
         addInventory(loc.item, loc.truth);
     }
+
     loadingEntry.innerHTML = `<small>T${turn}: ${char.name} 報告</small><br>${resultMsg}`;
 
     // --- 状態更新 ---
-    movedChars.push(selectedCharId); // 動いた人を追加
-    usedLocations.push(locName);     // 使った場所を追加
+    movedChars.push(selectedCharId);
+    usedLocations.push(locName);
     selectedCharId = null;
     turn++;
     
@@ -80,22 +87,19 @@ async function executeInvestigate(locName) {
         endFirstPhase();
     } else {
         document.getElementById('turn-count').innerText = turn;
-        refreshUI(); // ボタンの有効・無効を再計算
+        refreshUI();
     }
 }
 
-/**
- * UIの再構築（ロック判定）
- */
+// refreshUI, toggleAllControls, addInventory, endFirstPhase は前回と同様
+// (インベントリに保存する部分を忘れずに)
+
 function refreshUI() {
-    // 1. 全員動いたか、または5ターン目（最終ターン）ならロック解除
     if (movedChars.length >= 4 || turn === 5) {
         movedChars = []; 
-        // 5ターン目なら場所のロックも解除する特別な演出
         if (turn === 5) usedLocations = []; 
     }
 
-    // 2. キャラクターボタンの更新
     const ids = ['engineer', 'captain', 'pilot', 'observer'];
     ids.forEach(id => {
         const btn = document.getElementById(`btn-${id}`);
@@ -112,7 +116,6 @@ function refreshUI() {
         btn.classList.remove('active');
     });
 
-    // 3. 場所ボタンの更新
     document.querySelectorAll('.loc-btn').forEach(btn => {
         const locName = btn.innerText;
         if (usedLocations.includes(locName)) {
@@ -143,17 +146,17 @@ function endFirstPhase() {
     const log = document.getElementById('log-window');
     let finalHtml = "";
 
-    if (engineerLiedAboutPod && !inventory.has("医師の遺体")) {
+    // 勝利条件判定（死体が見つかっているか、かつノアが逃げていないか）
+    if (engineerLiedAboutPod && !bodyDiscovered) {
         finalHtml = "<div style='color:var(--error-red); text-align:center;'><h2>MISSION FAILED</h2><p>ノアがポッドで逃亡。船体構造が崩壊しました。</p></div>";
         setTimeout(() => { location.href = "badend1.html"; }, 5000);
     } else {
-        finalHtml = "<div style='color:var(--warning-yellow); text-align:center;'><h2>PHASE 01 COMPLETE</h2><p>重大な矛盾を検出。個別尋問を開始します。</p></div>";
+        finalHtml = "<div style='color:var(--warning-yellow); text-align:center;'><h2>PHASE 01 COMPLETE</h2><p>重大な矛盾を検出。個別尋問プロトコルを開始します。</p></div>";
         const btn = document.createElement('button');
         btn.className = "char-btn active";
         btn.style.justifyContent = "center";
         btn.innerText = ">> 尋問プロトコルを承認する";
         btn.onclick = () => {
-            // インベントリを保存して次へ
             localStorage.setItem('securedEvidence', JSON.stringify(Array.from(inventory)));
             location.href = "detective.html";
         };
@@ -164,5 +167,4 @@ function endFirstPhase() {
     log.prepend(endContainer);
 }
 
-// 初期化（初回ロード時）
 window.onload = refreshUI;
