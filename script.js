@@ -1,10 +1,11 @@
 let turn = 1;
 let selectedCharId = null;
-let lastCharId = null; // 連続使用制限用フラグ
+let movedChars = []; // そのラウンドで動いた人を記録
+let usedLocations = []; // 探索済みの場所を記録
 const inventory = new Set();
 let engineerLiedAboutPod = false;
 
-// 罪と嘘のマスターデータ
+// マスターデータ
 const MASTER_DATA = {
     chars: {
         engineer: { name: "ノア", lieLoc: "脱出ポッド", lieMsg: "「ポッドに異常はありません。ハッチも閉まっています」", isCulprit: true },
@@ -22,43 +23,19 @@ const MASTER_DATA = {
 };
 
 /**
- * キャラクター選択処理
+ * キャラクター選択
  */
 function selectChar(id) {
-    // 休息中のキャラはクリック無効（ボタン側でも制御しているが念のため）
-    if (id === lastCharId) return;
+    // 休息中（すでにこのラウンドで動いた）なら無視
+    if (movedChars.includes(id)) return;
 
     selectedCharId = id;
-    
-    // UI反映
     document.querySelectorAll('.char-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(`btn-${id}`).classList.add('active');
 }
 
 /**
- * UIの更新（休息中ラベルやボタン無効化の切り替え）
- */
-function updateCharUI() {
-    const ids = ['engineer', 'captain', 'pilot', 'observer'];
-    ids.forEach(id => {
-        const btn = document.getElementById(`btn-${id}`);
-        const status = document.getElementById(`status-${id}`);
-        
-        if (id === lastCharId) {
-            btn.disabled = true;
-            btn.classList.remove('active');
-            status.innerText = "RECHARGING";
-            status.className = "status-label status-recharging";
-        } else {
-            btn.disabled = false;
-            status.innerText = "AVAILABLE";
-            status.className = "status-label status-available";
-        }
-    });
-}
-
-/**
- * 探索実行（修正版：特定の一人のみ休息、他は復帰）
+ * 探索実行
  */
 async function executeInvestigate(locName) {
     if (!selectedCharId) {
@@ -70,7 +47,7 @@ async function executeInvestigate(locName) {
     const char = MASTER_DATA.chars[selectedCharId];
     const loc = MASTER_DATA.locations[locName];
 
-    // --- 通信開始演出：すべての操作を一旦ロック ---
+    // --- 通信演出：全ロック ---
     toggleAllControls(false);
 
     const loadingEntry = document.createElement('div');
@@ -78,7 +55,6 @@ async function executeInvestigate(locName) {
     loadingEntry.innerHTML = `>> [SENDING COMMAND] ${char.name} を ${locName} へ派遣中...`;
     log.prepend(loadingEntry);
 
-    // 3秒待機
     await new Promise(resolve => setTimeout(resolve, 3000));
 
     loadingEntry.classList.remove('analyzing');
@@ -89,98 +65,104 @@ async function executeInvestigate(locName) {
         resultMsg = `<span style="color:#fff;">[COMMS] ${char.name}: "${char.lieMsg}"</span>`;
         if (char.isCulprit) engineerLiedAboutPod = true;
     } else {
-        resultMsg = `<span style="color:var(--neon-green);">[REPORT] ${char.name}: 「${locName}にて『${loc.item}』を確保。${loc.truth}」</span>`;
+        resultMsg = `<span style="color:var(--neon-green);">[REPORT] ${char.name}: 「${locName}にて『${loc.item}』を確認。${loc.truth}」</span>`;
         addInventory(loc.item, loc.truth);
     }
     loadingEntry.innerHTML = `<small>T${turn}: ${char.name} 報告</small><br>${resultMsg}`;
 
     // --- 状態更新 ---
-    lastCharId = selectedCharId; // 今回派遣した人を記録
-    selectedCharId = null;       // 選択状態を解除
+    movedChars.push(selectedCharId); // 動いた人を追加
+    usedLocations.push(locName);     // 使った場所を追加
+    selectedCharId = null;
     turn++;
     
     if (turn > 5) {
         endFirstPhase();
     } else {
         document.getElementById('turn-count').innerText = turn;
-        
-        // --- ここでロックを解除 ---
-        updateCharUI(); // キャラクターボタンの状態を更新（前回の人のみDisabledにする）
-        document.querySelectorAll('.loc-btn').forEach(btn => btn.disabled = false); // 場所ボタンをすべて有効化
+        refreshUI(); // ボタンの有効・無効を再計算
     }
 }
 
 /**
- * キャラクターUIの更新（派遣した1人のみRECHARGINGにする）
+ * UIの再構築（ロック判定）
  */
-function updateCharUI() {
+function refreshUI() {
+    // 1. 全員動いたか、または5ターン目（最終ターン）ならロック解除
+    if (movedChars.length >= 4 || turn === 5) {
+        movedChars = []; 
+        // 5ターン目なら場所のロックも解除する特別な演出
+        if (turn === 5) usedLocations = []; 
+    }
+
+    // 2. キャラクターボタンの更新
     const ids = ['engineer', 'captain', 'pilot', 'observer'];
     ids.forEach(id => {
         const btn = document.getElementById(`btn-${id}`);
         const status = document.getElementById(`status-${id}`);
-        
-        if (id === lastCharId) {
-            // 直前に動いたキャラだけをロック
+        if (movedChars.includes(id)) {
             btn.disabled = true;
-            btn.classList.remove('active');
-            status.innerText = "RECHARGING";
+            status.innerText = "LOCKED";
             status.className = "status-label status-recharging";
         } else {
-            // それ以外のキャラは解放
             btn.disabled = false;
             status.innerText = "AVAILABLE";
             status.className = "status-label status-available";
         }
+        btn.classList.remove('active');
+    });
+
+    // 3. 場所ボタンの更新
+    document.querySelectorAll('.loc-btn').forEach(btn => {
+        const locName = btn.innerText;
+        if (usedLocations.includes(locName)) {
+            btn.disabled = true;
+        } else {
+            btn.disabled = false;
+        }
     });
 }
 
-/**
- * すべてのボタンを一時的にロック/解除する
- */
 function toggleAllControls(enable) {
-    // 全場所ボタンと全キャラボタンを制御
     document.querySelectorAll('.loc-btn, .char-btn').forEach(btn => btn.disabled = !enable);
 }
 
-/**
- * インベントリへの追加
- */
 function addInventory(name, detail) {
     if (inventory.has(name)) return;
     inventory.add(name);
-    
     const list = document.getElementById('evidence-list');
     if (inventory.size === 1) list.innerHTML = "";
-    
     const div = document.createElement('div');
     div.className = "evidence-item";
     div.innerHTML = `<strong>● ${name}</strong><p>${detail}</p>`;
     list.appendChild(div);
 }
 
-/**
- * 第一フェーズ終了判定
- */
 function endFirstPhase() {
-    toggleAllControls(false); // 全操作終了
+    toggleAllControls(false);
     const log = document.getElementById('log-window');
     let finalHtml = "";
 
-    // 失敗判定：犯人にポッドで嘘をつかせ、かつ誰も死体を見つけていない
     if (engineerLiedAboutPod && !inventory.has("医師の遺体")) {
-        finalHtml = "<div style='color:var(--error-red); text-align:center;'><h2>MISSION FAILED</h2><p>エンジニア：ノアによる「脱出ポッド」での逃亡を確認。<br>外部ハッチの爆破により船体構造が崩壊しました。</p></div>";
+        finalHtml = "<div style='color:var(--error-red); text-align:center;'><h2>MISSION FAILED</h2><p>ノアがポッドで逃亡。船体構造が崩壊しました。</p></div>";
         setTimeout(() => { location.href = "badend1.html"; }, 5000);
     } else {
-        finalHtml = "<div style='color:var(--warning-yellow); text-align:center;'><h2>PHASE 01 COMPLETE</h2><p>全要員の報告を完了。死体が発見されました。<br>これより「第ニフェーズ：個別尋問」を開始します。</p></div>";
+        finalHtml = "<div style='color:var(--warning-yellow); text-align:center;'><h2>PHASE 01 COMPLETE</h2><p>重大な矛盾を検出。個別尋問を開始します。</p></div>";
         const btn = document.createElement('button');
         btn.className = "char-btn active";
         btn.style.justifyContent = "center";
         btn.innerText = ">> 尋問プロトコルを承認する";
-        btn.onclick = () => location.href = "detective.html";
+        btn.onclick = () => {
+            // インベントリを保存して次へ
+            localStorage.setItem('securedEvidence', JSON.stringify(Array.from(inventory)));
+            location.href = "detective.html";
+        };
         log.prepend(btn);
     }
-    
     const endContainer = document.createElement('div');
     endContainer.innerHTML = `<hr>${finalHtml}`;
     log.prepend(endContainer);
 }
+
+// 初期化（初回ロード時）
+window.onload = refreshUI;
