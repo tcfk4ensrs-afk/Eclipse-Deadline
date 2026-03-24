@@ -17,21 +17,41 @@ class Game {
         };
     }
 
-    async init() {
-        try {
-            console.log("Loading character scenarios...");
-            await this.loadAllCharacters();
-            this.renderCharacterList();
-            this.updateEvidenceUI();
-            
-            if (!sessionStorage.getItem('GEMINI_API_KEY')) {
-                document.getElementById('api-modal').style.display = 'flex';
-            }
-        } catch (e) {
-            console.error("Failed to load scenarios:", e);
-            alert("シナリオファイルの読み込みに失敗しました。パスを確認してください。");
+    // script_detective.js の init 部分を差し替え
+async init() {
+    try {
+        console.log("Loading characters...");
+        await this.loadAllCharacters();
+        this.renderCharacterList();
+        this.updateEvidenceUI();
+        
+        // 保存済みのキーがあれば表示
+        if (sessionStorage.getItem('GEMINI_API_KEY')) {
+            console.log("API Key found in session.");
+            document.getElementById('api-modal').style.display = 'none';
+        } else {
+            document.getElementById('api-modal').style.display = 'flex';
         }
+    } catch (e) {
+        console.error("Critical Init Error:", e);
+        // JSONがなくてもチャット枠だけは出せるようにする（テスト用）
+        document.getElementById('api-modal').style.display = 'flex';
     }
+}
+
+// 保存ボタンの関数（確実に保存されるように修正）
+window.saveApiKey = () => {
+    const key = document.getElementById('api-key-input').value.trim();
+    if (key) {
+        sessionStorage.setItem('GEMINI_API_KEY', key);
+        console.log("API Key saved to sessionStorage.");
+        document.getElementById('api-modal').style.display = 'none';
+        // 保存後に再初期化を試みる
+        game.init(); 
+    } else {
+        alert("キーを入力してください");
+    }
+};
 
     // JSONファイルをすべて読み込む
     async loadAllCharacters() {
