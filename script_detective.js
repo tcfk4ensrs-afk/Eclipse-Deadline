@@ -1,12 +1,20 @@
 class Game {
     constructor() {
+        // IDとファイル名の紐付け
         this.characterFiles = {
             engineer: "scenarios/characters/noa.json",
             captain: "scenarios/characters/haris.json",
             pilot: "scenarios/characters/riku.json",
             observer: "scenarios/characters/mei.json"
         };
-        this.characters = [];
+        // IDと画像パスの紐付け
+        this.charImages = {
+            engineer: "assets/noa.jpg",
+            captain: "assets/haris.jpg",
+            pilot: "assets/riku.jpg",
+            observer: "assets/mei.jpg"
+        };
+        this.characters = []; // ここにJSONの中身が入る
         this.currentCharacterId = null;
         this.isAiThinking = false;
         this.state = {
@@ -60,7 +68,20 @@ class Game {
         this.characters.forEach(char => {
             const div = document.createElement('div');
             div.className = 'char-card';
-            div.innerHTML = `<h4>${char.name}</h4><p>${char.role || char.occupation}</p>`;
+            
+            // 画像パスの取得
+            const imgSrc = this.charImages[char.id] || "assets/default.jpg";
+            
+            // HTML構造を画像付きにアップデート
+            div.innerHTML = `
+                <div class="char-thumb">
+                    <img src="${imgSrc}" alt="${char.name}">
+                </div>
+                <div class="char-details">
+                    <h4>${char.name}</h4>
+                    <p>${char.role || char.occupation}</p>
+                </div>
+            `;
             div.onclick = () => this.openInterrogation(char.id);
             list.appendChild(div);
         });
@@ -145,9 +166,21 @@ inner_voice: [内心]
 
     openInterrogation(id) {
         this.currentCharacterId = id;
+        const char = this.characters.find(c => c.id === id);
+        
         document.getElementById('main-menu').style.display = 'none';
         document.getElementById('interrogation-room').style.display = 'flex';
-        document.getElementById('target-name').innerText = this.characters.find(c => c.id === id).name;
+        
+        // 尋問ヘッダーの名前と画像を更新
+        const targetNameElem = document.getElementById('target-name');
+        const imgSrc = this.charImages[id] || "assets/default.jpg";
+        
+        targetNameElem.innerHTML = `
+            <div style="display:flex; align-items:center; gap:15px;">
+                <img src="${imgSrc}" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--neon-green); object-fit:cover;">
+                <span>${char.name}</span>
+            </div>
+        `;
     }
 
     startAccusation() {
