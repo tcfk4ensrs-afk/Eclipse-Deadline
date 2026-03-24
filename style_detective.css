@@ -14,6 +14,19 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
+}
+
+/* スキャンラインエフェクト（任意） */
+body::after {
+    content: " ";
+    display: block;
+    position: fixed;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+    background-size: 100% 4px;
+    z-index: 1000;
+    pointer-events: none;
 }
 
 .game-container {
@@ -33,7 +46,7 @@ body {
 .side-panel { width: 300px; display: flex; flex-direction: column; }
 .main-panel { flex: 1; display: flex; flex-direction: column; position: relative; }
 
-h3 { border-bottom: 1px solid var(--neon-green); margin-top: 0; padding-bottom: 10px; }
+h3 { border-bottom: 1px solid var(--neon-green); margin-top: 0; padding-bottom: 10px; letter-spacing: 2px; }
 
 /* 証拠品リスト */
 .evidence-item {
@@ -42,6 +55,12 @@ h3 { border-bottom: 1px solid var(--neon-green); margin-top: 0; padding-bottom: 
     margin-bottom: 10px;
     border-left: 3px solid var(--warning-yellow);
     font-size: 0.9em;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
 }
 
 /* キャラクター選択グリッド */
@@ -57,11 +76,12 @@ h3 { border-bottom: 1px solid var(--neon-green); margin-top: 0; padding-bottom: 
     background: #000;
     display: flex;
     align-items: center;
-    padding: 0; /* 内部に画像があるため0に */
-    height: 100px; /* 高さを固定 */
+    padding: 0;
+    height: 100px;
     cursor: pointer;
     transition: 0.3s;
     overflow: hidden;
+    position: relative;
 }
 
 /* カード内の画像エリア */
@@ -70,13 +90,14 @@ h3 { border-bottom: 1px solid var(--neon-green); margin-top: 0; padding-bottom: 
     height: 100px;
     border-right: 1px solid var(--neon-green);
     overflow: hidden;
+    background: #051a05;
 }
 
 .char-thumb img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* 正方形にトリミング */
-    filter: sepia(1) hue-rotate(90deg) brightness(0.8); /* 緑モニター風フィルター */
+    object-fit: cover;
+    filter: sepia(1) hue-rotate(90deg) brightness(0.8);
     transition: 0.3s;
 }
 
@@ -87,39 +108,81 @@ h3 { border-bottom: 1px solid var(--neon-green); margin-top: 0; padding-bottom: 
     text-align: left;
 }
 
-.char-details h4 { margin: 0; font-size: 1.1em; }
+.char-details h4 { margin: 0; font-size: 1.1em; text-transform: uppercase; }
 .char-details p { margin: 5px 0 0; font-size: 0.8em; color: var(--neon-green); opacity: 0.7; }
 
 /* ホバー時の演出 */
 .char-card:hover {
     background: var(--dim-green);
     box-shadow: 0 0 15px var(--neon-green);
+    transform: scale(1.02);
 }
 
 .char-card:hover .char-thumb img {
-    filter: none; /* ホバーでカラーにする */
+    filter: none;
     brightness: 1.1;
 }
-.char-card:hover { background: var(--dim-green); transform: scale(1.02); }
 
 /* チャット画面 */
 #interrogation-room {
+    display: none; /* JSでflexに切り替え */
     flex-direction: column;
     height: 100%;
+}
+
+.chat-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--dim-green);
+    margin-bottom: 15px;
+}
+
+/* 尋問中の相手アイコン */
+#target-name img {
+    filter: sepia(1) hue-rotate(90deg) brightness(1.2);
+    box-shadow: 0 0 10px var(--neon-green);
 }
 
 #chat-log {
     flex: 1;
     overflow-y: auto;
-    padding: 10px;
+    padding: 15px;
     border: 1px inset var(--neon-green);
-    background: #000;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 4px;
 }
 
-.msg { margin-bottom: 15px; line-height: 1.5; }
-.msg.user { color: #fff; text-align: right; }
-.msg.model { color: var(--neon-green); }
-.inner-thought { color: #666; font-size: 0.8em; margin-top: 5px; }
+/* メッセージスタイル */
+.msg { margin-bottom: 20px; line-height: 1.6; max-width: 85%; }
+.msg.user { 
+    color: #fff; 
+    text-align: right; 
+    margin-left: auto;
+    border-right: 2px solid #fff;
+    padding-right: 10px;
+}
+.msg.model { 
+    color: var(--neon-green); 
+    border-left: 2px solid var(--neon-green);
+    padding-left: 10px;
+}
+.msg.system {
+    color: var(--warning-yellow);
+    text-align: center;
+    font-size: 0.8em;
+    max-width: 100%;
+}
+
+.inner-thought { 
+    color: #666; 
+    font-size: 0.85em; 
+    margin-top: 8px; 
+    padding-top: 5px;
+    border-top: 1px dotted #333;
+    font-style: italic;
+}
 
 .input-area {
     display: flex;
@@ -132,15 +195,25 @@ input[type="text"] {
     background: #000;
     border: 1px solid var(--neon-green);
     color: var(--neon-green);
-    padding: 10px;
+    padding: 12px;
+    font-family: inherit;
+}
+
+input[type="text"]:focus {
+    outline: none;
+    box-shadow: 0 0 10px var(--neon-green);
 }
 
 button {
     background: var(--dim-green);
     color: var(--neon-green);
     border: 1px solid var(--neon-green);
-    padding: 10px 20px;
+    padding: 10px 25px;
     cursor: pointer;
+    font-family: inherit;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: 0.2s;
 }
 
 button:hover { background: var(--neon-green); color: #000; }
@@ -149,17 +222,32 @@ button:hover { background: var(--neon-green); color: #000; }
 .modal {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0,0,0,0.9);
     display: none;
     justify-content: center;
     align-items: center;
-    z-index: 100;
+    z-index: 2000;
 }
 .modal-content {
     background: #000;
     border: 2px solid var(--neon-green);
-    padding: 30px;
+    padding: 40px;
     text-align: center;
+    box-shadow: 0 0 30px var(--dim-green);
 }
 
-.danger-btn { border-color: #ff4444; color: #ff4444; margin-top: auto; }
+#api-key-input {
+    width: 300px;
+    margin: 20px 0;
+    display: block;
+}
+
+.danger-btn { 
+    border-color: #ff4444; 
+    color: #ff4444; 
+    margin-top: auto; 
+}
+.danger-btn:hover {
+    background: #ff4444;
+    color: #fff;
+}
