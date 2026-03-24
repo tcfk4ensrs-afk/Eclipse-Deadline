@@ -50,19 +50,39 @@ function initIntro() {
 
 function showScenario() {
     const scenario = scenarios[currentStep];
-    
-    // UI更新
+    console.log("--- Current Scenario: " + scenario.id + " ---");
+
+    // テキスト更新
     document.getElementById('speaker-name').innerText = scenario.name;
     document.getElementById('dialogue-text').innerText = scenario.text;
     
-    // 立ち絵の切り替え
+    // 画像要素の取得
     const imgElement = document.getElementById('char-img');
-    imgElement.style.opacity = 0; // 一旦消す（フェード演出）
-    setTimeout(() => {
+    
+    if (imgElement) {
+        console.log("Attempting to load image: " + scenario.image);
+        
+        // 演出なしで即座に表示を試みる（トラブル防止のため一旦フェードを無効化）
         imgElement.src = scenario.image;
-        imgElement.style.opacity = 1;
-    }, 200);
+        imgElement.style.opacity = "1"; 
+        imgElement.style.visibility = "visible"; // 念のため
+        
+        // 画像読み込みエラーが起きた時のログ
+        imgElement.onerror = function() {
+            console.error("FAILED to load image at: " + scenario.image);
+            // エラー時は枠を赤くして目立たせる
+            imgElement.style.border = "2px solid red";
+        };
+        
+        imgElement.onload = function() {
+            console.log("SUCCESS: Image loaded correctly.");
+            imgElement.style.border = "none";
+        };
+    } else {
+        console.error("Error: Element with ID 'char-img' not found.");
+    }
 
+    // 選択肢ボタンの生成
     const choiceArea = document.getElementById('choice-area');
     choiceArea.innerHTML = "";
 
