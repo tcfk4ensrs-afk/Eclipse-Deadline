@@ -12,11 +12,11 @@ export async function sendToAI(systemPrompt, userText, history) {
         throw new Error("APIキーが設定されていません。画面上部の設定から入力してください。");
     }
 
-    // モデル名をフルパスで指定（v1betaの仕様に合わせる）
-    const model = "models/gemini-1.5-flash";
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${apiKey}`;
+    // --- 修正箇所：モデル名をフルパス(models/...)で指定 ---
+    const modelName = "models/gemini-1.5-flash";
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${apiKey}`;
 
-    // APIに送るメッセージの組み立て
+    // APIに送るコンテンツの組み立て
     const contents = [
         { 
             role: "user", 
@@ -26,7 +26,7 @@ export async function sendToAI(systemPrompt, userText, history) {
             role: "model", 
             parts: [{ text: "了解しました。私は指示されたキャラクターとして、設定と秘密を守りながら、outer_voiceとinner_voiceの形式で対話に応じます。" }] 
         },
-        // 履歴をGeminiの形式に変換
+        // 過去の履歴をGeminiのrole形式（user/model）に変換
         ...history.map(h => ({
             role: h.role === 'user' ? 'user' : 'model',
             parts: [{ text: h.text }]
@@ -46,21 +46,25 @@ export async function sendToAI(systemPrompt, userText, history) {
 
         const data = await response.json();
 
-        // API側からのエラー返却
+        // API側からのエラー返却（キーの間違い、クォータ制限など）
         if (data.error) {
             console.error("Gemini API Error:", data.error);
             throw new Error(data.error.message);
         }
 
         // 応答が空、あるいは安全フィルターでブロックされた場合
-        if (!data.candidates || data.candidates.length === 0) {
-            throw new Error("AIが応答を生成できませんでした（安全フィルター等によるブロックの可能性があります）。");
+        if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content) {
+            // 安全フィルターによるブロックが疑われる場合
+            if (data.promptFeedback && data.promptFeedback.blockReason) {
+                throw new Error(`AIが応答を拒否しました（理由: ${data.promptFeedback.blockReason}）。表現を変えてみてください。`);
+            }
+            throw new Error("AIから有効な応答が得られませんでした。");
         }
 
         return data.candidates[0].content.parts[0].text;
 
     } catch (err) {
-        console.error("Network or API Error:", err);
+        console.error("Fetch/API Error:", err);
         throw err;
     }
 }
