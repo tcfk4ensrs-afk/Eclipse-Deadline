@@ -2,7 +2,7 @@ const scenarios = [
     {
         id: "captain",
         name: "ハリス船長",
-        image: "assets/haris.png", // 実際の画像パスを指定してください
+        image: "assets/haris.jpg", // 実際の画像パスを指定してください
         text: "「……事態は深刻だ。医師の行方がわからず、燃料も不自然に減っている。君はこの状況、どう見ている？」",
         choices: [
             { text: "「内部に犯人がいるはずです」", affinity: "suspicious", nextText: "「……やはり君もそう思うか。慎重に調査を頼む。」" },
@@ -12,7 +12,7 @@ const scenarios = [
     {
         id: "engineer",
         name: "ノア",
-        image: "assets/noa.png",
+        image: "assets/noa.jpg",
         text: "「あぁん？ 忙しい時に通信してくんなよ。エンジンがイカれてんだ、俺が何とかするしかねぇんだよ。」",
         choices: [
             { text: "「エンジンの異常について詳しく」", affinity: "professional", nextText: "「バイオ・コンバーターが空っぽなんだよ。誰かが捨てたとしか思えねぇ。」" },
@@ -22,7 +22,7 @@ const scenarios = [
     {
         id: "pilot",
         name: "リク",
-        image: "assets/riku.png",
+        image: "assets/riku.jpg",
         text: "「なぁ、もし地球に帰れなかったらどうする？ 俺はまだ、あっちでやり残したことがあるんだ……。」",
         choices: [
             { text: "「必ず帰れる、私が保証する」", affinity: "friendly", nextText: "「……ありがとな。お前を信じるぜ。」" },
