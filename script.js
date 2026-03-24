@@ -1,3 +1,11 @@
+// --- [追加] 画像パスの定義 (intro.htmlやassetsの構成に合わせる) ---
+const charImages = {
+    engineer: "assets/noa.jpg",
+    captain: "assets/haris.jpg",
+    pilot: "assets/riku.jpg",
+    observer: "assets/mei.jpg"
+};
+
 let turn = 1;
 let selectedCharId = null;
 let movedChars = []; 
@@ -48,12 +56,31 @@ window.selectChar = function(id) {
         targetBtn.classList.add('active');
         console.log("Class 'active' successfully added to: btn-" + id);
     }
+
+    // --- [追加] 背景画像の更新処理 ---
+    const bgArea = document.getElementById('char-bg-area');
+    const bgImg = document.getElementById('bg-char-img');
+    
+    if (bgArea && bgImg) {
+        bgArea.classList.remove('active'); // 一旦フェードアウト
+        
+        setTimeout(() => {
+            bgImg.src = charImages[id];
+            bgImg.onload = () => {
+                bgArea.classList.add('active'); // 読み込み完了でフェードイン
+            };
+            bgImg.onerror = () => {
+                console.error("Image load failed: " + charImages[id]);
+                bgArea.classList.remove('active');
+            };
+        }, 100);
+    }
 };
 
 /**
- * 探索実行も同様に登録
+ * 探索実行
  */
-async function executeInvestigate(locName) {
+window.executeInvestigate = async function(locName) {
     if (!selectedCharId) {
         alert("要員を選択してください");
         return;
@@ -70,6 +97,10 @@ async function executeInvestigate(locName) {
     loadingEntry.className = "analyzing";
     loadingEntry.innerHTML = `>> [SENDING COMMAND] ${char.name} を ${locName} へ派遣中...`;
     log.prepend(loadingEntry);
+
+    // 派遣が開始されたので背景画像を非表示にする
+    const bgArea = document.getElementById('char-bg-area');
+    if (bgArea) bgArea.classList.remove('active');
 
     await new Promise(resolve => setTimeout(resolve, 3000));
 
@@ -171,6 +202,11 @@ function addInventory(name, detail) {
 
 function endFirstPhase() {
     toggleAllControls(false);
+
+    // フェーズ終了時に背景画像を確実に消す
+    const bgArea = document.getElementById('char-bg-area');
+    if (bgArea) bgArea.classList.remove('active');
+
     const log = document.getElementById('log-window');
     let finalHtml = "";
 
