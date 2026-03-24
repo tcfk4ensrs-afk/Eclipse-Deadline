@@ -42,7 +42,7 @@
 
         .game-container {
             display: grid;
-            grid-template-columns: 320px 1fr 320px;
+            grid-template-columns: 350px 1fr 320px; /* 左パネルを少し広く */
             gap: 20px;
             width: 96vw;
             height: 92vh;
@@ -56,56 +56,62 @@
             display: flex;
             flex-direction: column;
             box-shadow: inset 0 0 20px var(--dim-green);
-            position: relative; /* 背景画像配置用 */
+            position: relative;
             overflow: hidden;
         }
 
-        h3 { border-bottom: 1px solid var(--neon-green); padding-bottom: 8px; margin-top: 0; font-size: 1.1em; letter-spacing: 2px; position: relative; z-index: 2; }
+        h3 { border-bottom: 1px solid var(--neon-green); padding-bottom: 8px; margin-top: 0; font-size: 1.1em; letter-spacing: 2px; z-index: 2; }
 
-        /* --- 追加：立ち絵背景エリア --- */
-        .char-bg-container {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: flex-end; /* 右側に寄せる */
-            align-items: center;
-            pointer-events: none; /* ボタン操作を邪魔しない */
-            z-index: 1;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
+        /* 背景画像エリアは削除 */
 
-        #bg-char-img {
-            max-height: 90%;
-            max-width: 60%;
-            object-fit: contain;
-            filter: drop-shadow(0 0 20px var(--neon-green)) opacity(0.2); /* 20%まで薄くする */
-        }
-
-        .char-bg-container.active {
-            opacity: 1;
-        }
-        /* -------------------------- */
-
+        /* 要員ボタンの修正（画像を表示するため） */
         .char-btn {
             width: 100%;
-            padding: 15px;
+            height: 80px; /* 高さを固定 */
             margin: 10px 0;
             background: transparent;
             color: var(--neon-green);
             border: 1px solid var(--neon-green);
             cursor: pointer;
-            text-align: left;
             transition: all 0.2s ease;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            align-items: center; /* 上下中央 */
+            padding: 0; /* 余白を一旦リセット */
+            overflow: hidden;
             position: relative;
             z-index: 2;
         }
+
+        /* [新規] ボタン内の顔写真スペース */
+        .char-img-thumb {
+            width: 80px; /* ボタンの高さと同じ正方形 */
+            height: 80px;
+            border-right: 1px solid var(--neon-green);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+        }
+
+        .char-img-thumb img {
+            width: auto;
+            height: 100%; /* 縦幅に合わせる */
+            min-width: 100%; /* 横が足りない場合は横幅に合わせる */
+            object-fit: cover; /* 両サイドをトリミングして正方形に収める */
+            filter: sepia(1) hue-rotate(90deg) contrast(1.2); /* 🟢ここがポイント：全体を緑っぽくする */
+        }
+
+        /* [新規] ボタン内のテキストエリア */
+        .char-info {
+            flex: 1;
+            padding: 0 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .char-name-label { font-size: 1em; font-weight: bold; margin-bottom: 4px; }
 
         .char-btn:hover:not(:disabled) { background: var(--dim-green); }
         
@@ -115,15 +121,23 @@
             font-weight: bold;
             box-shadow: 0 0 20px var(--neon-green);
         }
-        .char-btn.active::before { content: "▶"; position: absolute; left: -25px; color: var(--neon-green); animation: blink 0.8s infinite; }
+        /* active時の画像フィルターを解除 */
+        .char-btn.active .char-img-thumb img {
+            filter: none;
+            border-right: 1px solid #000;
+        }
+        /* active時のテキスト色調整 */
+        .char-btn.active .char-name-label { color: #000; }
+        .char-btn.active .status-label { border-color: #000; color: #000; }
 
-        .status-label { font-size: 0.7em; padding: 2px 6px; border: 1px solid; border-radius: 2px; }
+        .status-label { font-size: 0.7em; padding: 2px 6px; border: 1px solid; border-radius: 2px; width: fit-content;}
         .status-available { border-color: var(--neon-green); color: var(--neon-green); }
         .status-recharging { border-color: #555; color: #555; background: #111; }
 
         .char-btn:disabled { opacity: 0.4; cursor: not-allowed; border-color: #444; }
+        .char-btn:disabled .char-img-thumb img { filter: sepia(1) hue-rotate(90deg) contrast(0.8) brightness(0.5); }
 
-        .location-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; position: relative; z-index: 2; }
+        .location-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; z-index: 2; }
         .loc-btn {
             padding: 18px;
             background: rgba(0, 255, 65, 0.05);
@@ -146,7 +160,6 @@
             font-size: 0.9em;
             line-height: 1.6;
             border-radius: 4px;
-            position: relative;
             z-index: 2;
         }
 
@@ -170,7 +183,6 @@
             border: 2px double var(--warning-yellow);
             margin-bottom: 20px;
             background: rgba(255, 255, 0, 0.05);
-            position: relative;
             z-index: 2;
         }
     </style>
@@ -180,22 +192,39 @@
         <div class="panel">
             <h3>OPERATIVE STATUS</h3>
             <div id="char-list">
+                
                 <button class="char-btn" id="btn-engineer" onclick="selectChar('engineer')">
-                    <span>ノア (ENG)</span>
-                    <span class="status-label status-available" id="status-engineer">AVAILABLE</span>
+                    <div class="char-img-thumb"><img src="assets/noa.jpg" alt="Noa"></div>
+                    <div class="char-info">
+                        <div class="char-name-label">ノア (ENG)</div>
+                        <span class="status-label status-available" id="status-engineer">AVAILABLE</span>
+                    </div>
                 </button>
+                
                 <button class="char-btn" id="btn-captain" onclick="selectChar('captain')">
-                    <span>ハリス (CPT)</span>
-                    <span class="status-label status-available" id="status-captain">AVAILABLE</span>
+                    <div class="char-img-thumb"><img src="assets/haris.jpg" alt="Harris"></div>
+                    <div class="char-info">
+                        <div class="char-name-label">ハリス (CPT)</div>
+                        <span class="status-label status-available" id="status-captain">AVAILABLE</span>
+                    </div>
                 </button>
+                
                 <button class="char-btn" id="btn-pilot" onclick="selectChar('pilot')">
-                    <span>リク (PLT)</span>
-                    <span class="status-label status-available" id="status-pilot">AVAILABLE</span>
+                    <div class="char-img-thumb"><img src="assets/riku.jpg" alt="Riku"></div>
+                    <div class="char-info">
+                        <div class="char-name-label">リク (PLT)</div>
+                        <span class="status-label status-available" id="status-pilot">AVAILABLE</span>
+                    </div>
                 </button>
+                
                 <button class="char-btn" id="btn-observer" onclick="selectChar('observer')">
-                    <span>メイ (OBS)</span>
-                    <span class="status-label status-available" id="status-observer">AVAILABLE</span>
+                    <div class="char-img-thumb"><img src="assets/mei.jpg" alt="Mei"></div>
+                    <div class="char-info">
+                        <div class="char-name-label">メイ (OBS)</div>
+                        <span class="status-label status-available" id="status-observer">AVAILABLE</span>
+                    </div>
                 </button>
+                
             </div>
             <div style="margin-top: auto; font-size: 0.7em; color: #888; border-top: 1px solid #333; padding-top: 10px;">
                 ※警告: 通信安定のため、同一要員の連続派遣は禁止されています。
@@ -203,10 +232,6 @@
         </div>
 
         <div class="panel">
-            <div class="char-bg-container" id="char-bg-area">
-                <img id="bg-char-img" src="" alt="">
-            </div>
-
             <div class="turn-display">MISSION: T-<span id="turn-count">1</span> / 5</div>
             <h3>SECTOR SCANNER</h3>
             <div class="location-grid">
