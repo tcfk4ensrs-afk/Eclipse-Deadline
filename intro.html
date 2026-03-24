@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>GCC Terminal - Briefing</title>
+    <style>
+        :root {
+            --neon-green: #00ff41;
+            --dark-bg: #050a05;
+            --dim-green: rgba(0, 255, 65, 0.15);
+            --warning-yellow: #ffff00;
+        }
+
+        body {
+            background: var(--dark-bg);
+            color: var(--neon-green);
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ターミナル枠 */
+        .intro-container {
+            width: 800px;
+            height: 500px;
+            border: 1px solid var(--neon-green);
+            background: rgba(0, 5, 0, 0.9);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 30px var(--dim-green);
+            position: relative;
+        }
+
+        .system-msg { font-size: 0.8em; color: var(--warning-yellow); margin-bottom: 20px; }
+        
+        #speaker-name { font-size: 1.5em; border-bottom: 2px solid var(--neon-green); margin-bottom: 10px; width: fit-content; }
+        
+        #dialogue-text {
+            font-size: 1.2em;
+            line-height: 1.6;
+            flex-grow: 1;
+            margin-bottom: 30px;
+            min-height: 120px;
+        }
+
+        .choice-container { display: flex; flex-direction: column; gap: 10px; }
+
+        .choice-btn {
+            background: transparent;
+            color: var(--neon-green);
+            border: 1px solid var(--neon-green);
+            padding: 12px;
+            cursor: pointer;
+            text-align: left;
+            font-family: 'Courier New', monospace;
+            transition: 0.3s;
+        }
+
+        .choice-btn:hover { background: var(--neon-green); color: #000; }
+
+        /* 通信中の演出 */
+        .static {
+            position: absolute;
+            top:0; left:0; width:100%; height:100%;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1), rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="intro-container">
+        <div class="static"></div>
+        <div class="system-msg">>> INCOMING COMMUNICATION: BRIEFING PHASE</div>
+        
+        <div id="speaker-name">SYSTEM</div>
+        <div id="dialogue-text">ロード中...</div>
+
+        <div class="choice-container" id="choice-area">
+            </div>
+    </div>
+
+    <script src="script_intro.js"></script>
+</body>
+</html>
