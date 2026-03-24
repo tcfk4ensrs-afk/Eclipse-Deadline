@@ -1,3 +1,4 @@
+// --- グローバル変数の定義 ---
 let turn = 1;
 let selectedCharId = null;
 let movedChars = []; 
@@ -23,31 +24,29 @@ const MASTER_DATA = {
 };
 
 /**
- * キャラクター選択処理 ( window.selectChar に戻す)
+ * 【重要】windowオブジェクトに登録することでHTMLから呼べるようにする
  */
 window.selectChar = function(id) {
-    console.log("--- Click detected for ID: " + id + " ---");
+    console.log("--- 要員選択: " + id + " ---");
 
-    // 1. ロックの確認
+    // 派遣済み（LOCKED）なら何もしない
     if (movedChars.includes(id)) {
-        console.warn(id + " は使用済み（LOCKED）です。");
+        console.warn(id + " はロック中。");
         return;
     }
 
-    // 2. IDの保持
     selectedCharId = id;
 
-    // 3. UIの更新（クラスの付け外し）
+    // UIの選択表示をリセットして、選んだものだけ光らせる
     const allButtons = document.querySelectorAll('.char-btn');
-    allButtons.forEach(btn => {
-        btn.classList.remove('active');
-    });
+    allButtons.forEach(btn => btn.classList.remove('active'));
 
     const targetBtn = document.getElementById('btn-' + id);
     if (targetBtn) {
         targetBtn.classList.add('active');
-        console.log("Class 'active' successfully added to: btn-" + id);
     }
+    
+    document.getElementById('log-window').innerHTML += `<br>>> 要員 [${id.toUpperCase()}] が待機中。`;
 };
 
 /**
@@ -55,7 +54,7 @@ window.selectChar = function(id) {
  */
 window.executeInvestigate = async function(locName) {
     if (!selectedCharId) {
-        alert("要員を選択してください");
+        alert("まず左パネルから要員を選択してください。");
         return;
     }
 
@@ -63,46 +62,46 @@ window.executeInvestigate = async function(locName) {
     const char = MASTER_DATA.chars[selectedCharId];
     const loc = MASTER_DATA.locations[locName];
 
-    // --- 全ロック ---
+    // 全ボタンを操作不能にする（二重送信防止）
     toggleAllControls(false);
 
     const loadingEntry = document.createElement('div');
     loadingEntry.className = "analyzing";
-    loadingEntry.innerHTML = `>> [SENDING COMMAND] ${char.name} を ${locName} へ派遣中...`;
+    loadingEntry.innerHTML = `>> [派遣中] ${char.name} が ${locName} をスキャン中...`;
     log.prepend(loadingEntry);
 
-    await new Promise(resolve => setTimeout(resolve, 3000));
-
+    // 演出用の待ち時間
+    await new Promise(resolve => setTimeout(resolve, 2500));
     loadingEntry.classList.remove('analyzing');
     
     let resultMsg = "";
 
-    // --- ロジック分岐 ---
+    // シナリオ分岐ロジック
     if (locName === "エンジンルーム") {
-        resultMsg = `[REPORT] ${char.name}: 「エンジンルームを調査。……この最新の[バイオ・コンバーター]、様子がおかしいです。有機燃料が完全に空で、ログには強制排出の記録が。……」`;
+        resultMsg = `[報告] ${char.name}: 「エンジンルームを確認。バイオ・コンバーターが強制排出されています。中身は……空です。」`;
         addInventory(loc.item, loc.truth);
     } 
     else if (char.isCulprit && locName === "脱出ポッド") {
         if (bodyDiscovered) {
-            resultMsg = `[REPORT] ${char.name}: 「……報告します。ポッド内に医師の遺体を確認。後頭部に鈍器のような痕があります。燃料計は……ゼロ。完全に空です。」`;
+            resultMsg = `[報告] ${char.name}: 「……遺体を確認。燃料も抜かれています。逃げ場はありません。」`;
             addInventory(loc.item, loc.truth);
         } else {
-            resultMsg = `<span style="color:#fff;">[COMMS] ${char.name}: "${char.lieMsg}"</span>`;
+            resultMsg = `<span style="color:#fff;">[報告] ${char.name}: "${char.lieMsg}"</span>`;
             engineerLiedAboutPod = true;
         }
     }
     else if (char.lieLoc === locName) {
-        resultMsg = `<span style="color:#fff;">[COMMS] ${char.name}: "${char.lieMsg}"</span>`;
+        resultMsg = `<span style="color:#fff;">[報告] ${char.name}: "${char.lieMsg}"</span>`;
     }
     else {
-        resultMsg = `<span style="color:var(--neon-green);">[REPORT] ${char.name}: 「${locName}にて『${loc.item}』を確認。${loc.truth}」</span>`;
+        resultMsg = `<span style="color:var(--neon-green);">[報告] ${char.name}: 「${locName}で『${loc.item}』を発見。${loc.truth}」</span>`;
         if (locName === "脱出ポッド") bodyDiscovered = true;
         addInventory(loc.item, loc.truth);
     }
 
-    loadingEntry.innerHTML = `<small>T${turn}: ${char.name} 報告</small><br>${resultMsg}`;
+    loadingEntry.innerHTML = `<small>T${turn}: ${char.name} の報告</small><br>${resultMsg}`;
 
-    // --- 状態更新 ---
+    // 状態更新
     movedChars.push(selectedCharId);
     usedLocations.push(locName);
     selectedCharId = null;
@@ -114,15 +113,15 @@ window.executeInvestigate = async function(locName) {
         document.getElementById('turn-count').innerText = turn;
         refreshUI();
     }
-}
+};
 
 /**
- * UIの再描画
+ * ボタンの有効/無効切り替え
  */
 function refreshUI() {
-    if (movedChars.length >= 4 || turn === 5) {
+    // 4人全員使ったらリセット
+    if (movedChars.length >= 4) {
         movedChars = []; 
-        if (turn === 5) usedLocations = []; 
     }
 
     const ids = ['engineer', 'captain', 'pilot', 'observer'];
@@ -143,13 +142,10 @@ function refreshUI() {
         btn.classList.remove('active');
     });
 
+    // 場所ボタンのロック
     document.querySelectorAll('.loc-btn').forEach(btn => {
         const locName = btn.innerText;
-        if (usedLocations.includes(locName)) {
-            btn.disabled = true;
-        } else {
-            btn.disabled = false;
-        }
+        btn.disabled = usedLocations.includes(locName);
     });
 }
 
@@ -174,14 +170,14 @@ function endFirstPhase() {
     let finalHtml = "";
 
     if (engineerLiedAboutPod && !bodyDiscovered) {
-        finalHtml = "<div style='color:var(--error-red); text-align:center;'><h2>MISSION FAILED</h2><p>何者かが逃亡。船体構造が崩壊しました。</p></div>";
+        finalHtml = "<div style='color:var(--error-red); text-align:center;'><h2>MISSION FAILED</h2><p>犯人の隠蔽工作を阻止できませんでした。</p></div>";
         setTimeout(() => { location.href = "badend1.html"; }, 5000);
     } else {
-        finalHtml = "<div style='color:var(--warning-yellow); text-align:center;'><h2>PHASE 01 COMPLETE</h2><p>重大な矛盾を検出。個別尋問プロトコルを開始します。</p></div>";
+        finalHtml = "<div style='color:var(--warning-yellow); text-align:center;'><h2>PHASE 01 COMPLETE</h2><p>証拠を保存しました。個別尋問へ移行します。</p></div>";
         const btn = document.createElement('button');
         btn.className = "char-btn active";
         btn.style.justifyContent = "center";
-        btn.innerText = ">> 尋問プロトコルを承認する";
+        btn.innerText = ">> 尋問を開始する";
         btn.onclick = () => {
             localStorage.setItem('securedEvidence', JSON.stringify(Array.from(inventory)));
             location.href = "detective.html";
@@ -193,4 +189,5 @@ function endFirstPhase() {
     log.prepend(endContainer);
 }
 
+// 初期化
 window.onload = refreshUI;
