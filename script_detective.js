@@ -1,13 +1,12 @@
 class Game {
     constructor() {
-        // IDとファイル名の紐付け
         this.characterFiles = {
             engineer: "scenarios/characters/noa.json",
             captain: "scenarios/characters/haris.json",
             pilot: "scenarios/characters/riku.json",
             observer: "scenarios/characters/mei.json"
         };
-        this.characters = []; // ここにJSONの中身が入る
+        this.characters = [];
         this.currentCharacterId = null;
         this.isAiThinking = false;
         this.state = {
@@ -17,56 +16,46 @@ class Game {
         };
     }
 
-    // script_detective.js の init 部分を差し替え
-async init() {
-    try {
-        console.log("Loading characters...");
-        await this.loadAllCharacters();
-        this.renderCharacterList();
-        this.updateEvidenceUI();
-        
-        // 保存済みのキーがあれば表示
-        if (sessionStorage.getItem('GEMINI_API_KEY')) {
-            console.log("API Key found in session.");
-            document.getElementById('api-modal').style.display = 'none';
-        } else {
-            document.getElementById('api-modal').style.display = 'flex';
+    async init() {
+        console.log("Game.init() started...");
+        try {
+            // JSONの読み込みを試みる
+            await this.loadAllCharacters();
+            this.renderCharacterList();
+            this.updateEvidenceUI();
+            
+            console.log("Characters loaded:", this.characters);
+
+            // モーダルの表示制御
+            const modal = document.getElementById('api-modal');
+            if (sessionStorage.getItem('GEMINI_API_KEY')) {
+                console.log("API Key exists. Closing modal.");
+                if (modal) modal.style.display = 'none';
+            } else {
+                console.log("No API Key. Opening modal.");
+                if (modal) modal.style.display = 'flex';
+            }
+        } catch (e) {
+            console.error("Init Error (Check if JSON files exist in scenarios/characters/):", e);
+            // エラー時もキー入力だけはできるようにする
+            const modal = document.getElementById('api-modal');
+            if (modal) modal.style.display = 'flex';
         }
-    } catch (e) {
-        console.error("Critical Init Error:", e);
-        // JSONがなくてもチャット枠だけは出せるようにする（テスト用）
-        document.getElementById('api-modal').style.display = 'flex';
     }
-}
 
-// 保存ボタンの関数（確実に保存されるように修正）
-window.saveApiKey = () => {
-    const key = document.getElementById('api-key-input').value.trim();
-    if (key) {
-        sessionStorage.setItem('GEMINI_API_KEY', key);
-        console.log("API Key saved to sessionStorage.");
-        document.getElementById('api-modal').style.display = 'none';
-        // 保存後に再初期化を試みる
-        game.init(); 
-    } else {
-        alert("キーを入力してください");
-    }
-};
-
-    // JSONファイルをすべて読み込む
     async loadAllCharacters() {
         const promises = Object.entries(this.characterFiles).map(async ([id, path]) => {
             const res = await fetch(path);
-            if (!res.ok) throw new Error(`Fetch error: ${path}`);
+            if (!res.ok) throw new Error(`Could not find ${path}`);
             const data = await res.json();
             return { id, ...data };
         });
         this.characters = await Promise.all(promises);
     }
 
-    // --- 以下、描画・通信ロジック（前回のものと同じ） ---
     renderCharacterList() {
         const list = document.getElementById('character-list');
+        if (!list) return;
         list.innerHTML = '';
         this.characters.forEach(char => {
             const div = document.createElement('div');
@@ -79,9 +68,10 @@ window.saveApiKey = () => {
 
     updateEvidenceUI() {
         const list = document.getElementById('evidence-list');
+        if (!list) return;
         list.innerHTML = this.state.evidences.map(ev => 
             `<div class="evidence-item">● ${ev}</div>`
-        ).join('') || '<p style="color:#555">NO DATA</p>';
+        ).join('') || '<p style="color:#555">NO DATA SECURED</p>';
     }
 
     async sendMessage() {
@@ -96,9 +86,12 @@ window.saveApiKey = () => {
         try {
             const char = this.characters.find(c => c.id === this.currentCharacterId);
             const history = this.state.history[this.currentCharacterId] || [];
+            
+            // window.sendToAI が ai.js から正しく export/import されている必要があります
             const responseText = await window.sendToAI(this.constructPrompt(char), text, history);
             this.appendMessage('model', responseText);
         } catch (e) {
+            console.error("Chat Error:", e);
             this.appendMessage('system', "COMMUNICATION ERROR: " + e.message);
         } finally {
             this.isAiThinking = false;
@@ -122,6 +115,7 @@ window.saveApiKey = () => {
 
     renderSingleMessage(role, outer, inner) {
         const log = document.getElementById('chat-log');
+        if (!log) return;
         const div = document.createElement('div');
         div.className = `msg ${role}`;
         div.innerHTML = `<div>${outer}</div>`;
@@ -139,7 +133,7 @@ window.saveApiKey = () => {
 - 役割: ${char.role || char.occupation}
 - 性格: ${char.personality}
 - 口調: ${char.style || char.talk_style}
-- あなたの秘密: ${JSON.stringify(char.secrets)}
+- あなたの秘密: ${JSON.stringify(char.secrets || char.secret_sin)}
 # Context
 プレイヤーのあなたへの態度: ${userAffinity}
 提示されている証拠: ${this.state.evidences.join(', ')}
@@ -157,25 +151,54 @@ inner_voice: [内心]
     }
 
     startAccusation() {
-        const culprit = prompt("真犯人の名前を入力してください（テスト用）");
+        const culprit = prompt("真犯人の名前を入力してください（ハリス/ノア/リク/メイ）");
         if (culprit === "ノア") {
             alert("正解！エンディングへ移行します。");
             location.href = "true-end.html";
         } else if (culprit) {
-            alert("誤認逮捕です...");
+            alert("誤認逮捕です。船は崩壊しました...");
             location.href = "bad-end.html";
         }
     }
 }
 
-// 起動
+// --- 初期化とグローバル登録 ---
+
+// インスタンスを先に作成
 const game = new Game();
 window.game = game;
+
+// 保存関数をグローバルに登録
+window.saveApiKey = () => {
+    const keyInput = document.getElementById('api-key-input');
+    const key = keyInput ? keyInput.value.trim() : "";
+    
+    if (key) {
+        sessionStorage.setItem('GEMINI_API_KEY', key);
+        console.log("API Key saved.");
+        
+        // モーダルを閉じる
+        const modal = document.getElementById('api-modal');
+        if (modal) modal.style.display = 'none';
+        
+        // 再初期化
+        game.init(); 
+    } else {
+        alert("キーを入力してください");
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     game.init();
-    document.getElementById('send-btn').onclick = () => game.sendMessage();
-    document.getElementById('back-btn').onclick = () => {
-        document.getElementById('interrogation-room').style.display = 'none';
-        document.getElementById('main-menu').style.display = 'block';
-    };
+    
+    const sendBtn = document.getElementById('send-btn');
+    if (sendBtn) sendBtn.onclick = () => game.sendMessage();
+    
+    const backBtn = document.getElementById('back-btn');
+    if (backBtn) {
+        backBtn.onclick = () => {
+            document.getElementById('interrogation-room').style.display = 'none';
+            document.getElementById('main-menu').style.display = 'block';
+        };
+    }
 });
