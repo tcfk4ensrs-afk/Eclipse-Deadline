@@ -2,7 +2,7 @@ const scenarios = [
     {
         id: "captain",
         name: "ハリス船長",
-        image: "https://via.placeholder.com/350x500/002200/00ff41?text=HARRIS", // 実際の画像パスを指定してください
+        image: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", // 実際の画像パスを指定してください
         text: "「……事態は深刻だ。医師の行方がわからず、燃料も不自然に減っている。君はこの状況、どう見ている？」",
         choices: [
             { text: "「内部に犯人がいるはずです」", affinity: "suspicious", nextText: "「……やはり君もそう思うか。慎重に調査を頼む。」" },
