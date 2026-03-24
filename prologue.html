@@ -232,9 +232,12 @@
             if (alertSound) alertSound.pause();
             
             const link = document.createElement('a');
-            link.href = 'select.html'; // 第一フェーズへ
+            
+            // --- ここを修正：select.html ではなく intro.html へ飛ばす ---
+            link.href = 'intro.html'; 
+            
             link.className = 'start-link';
-            link.innerText = '―― 通信を開始しますか？ [YES]';
+            link.innerText = '―― 各クルーとの個別回線を確立しますか？ [YES]';
             link.style.opacity = 1; // フェードイン
             terminal.appendChild(link);
             
