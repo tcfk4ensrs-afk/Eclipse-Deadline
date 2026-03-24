@@ -33,24 +33,29 @@
             position: relative;
         }
 
-        /* 左側：立ち絵エリア */
-        .char-stage {
-            width: 350px;
-            border-right: 1px solid var(--dim-green);
-            display: flex;
-            justify-content: center;
-            align-items: flex-end; /* 足元を底に合わせる */
-            background: rgba(0, 255, 65, 0.02);
-            overflow: hidden;
-        }
+        /* 立ち絵表示エリア：ここを「中央揃え」に変更 */
+.char-stage {
+    width: 350px;
+    border-right: 1px solid var(--dim-green);
+    display: flex;
+    justify-content: center;
+    align-items: center;    /* flex-end から center に変更 */
+    background: rgba(0, 255, 65, 0.02);
+    overflow: hidden;
+    padding: 20px;          /* 枠にぶつからないよう少し余裕を持たせる */
+}
 
-        #char-img {
-            max-width: 100%;
-            max-height: 90%;
-            object-fit: contain;
-            filter: drop-shadow(0 0 10px var(--neon-green));
-            transition: 0.5s; /* 切り替え時のフェード用 */
-        }
+/* キャラクター画像自体の調整 */
+#char-img {
+    max-width: 100%;
+    max-height: 95%;        /* 縦幅いっぱいに使う */
+    object-fit: contain;    /* アスペクト比を維持して収める */
+    filter: drop-shadow(0 0 15px var(--neon-green));
+    transition: opacity 0.5s;
+    
+    /* もし画像自体に余白があって下に寄る場合は、ここを調整 */
+    transform: translateY(0px); 
+}
 
         /* 右側：テキストエリア */
         .main-content {
