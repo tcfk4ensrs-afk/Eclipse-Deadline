@@ -23,32 +23,53 @@
             overflow: hidden;
         }
 
-        /* ターミナル枠 */
         .intro-container {
-            width: 800px;
-            height: 500px;
+            width: 900px;
+            height: 550px;
             border: 1px solid var(--neon-green);
             background: rgba(0, 5, 0, 0.9);
-            padding: 40px;
-            display: flex;
-            flex-direction: column;
+            display: flex; /* 横並びにする */
             box-shadow: 0 0 30px var(--dim-green);
             position: relative;
         }
 
-        .system-msg { font-size: 0.8em; color: var(--warning-yellow); margin-bottom: 20px; }
-        
-        #speaker-name { font-size: 1.5em; border-bottom: 2px solid var(--neon-green); margin-bottom: 10px; width: fit-content; }
-        
-        #dialogue-text {
-            font-size: 1.2em;
-            line-height: 1.6;
-            flex-grow: 1;
-            margin-bottom: 30px;
-            min-height: 120px;
+        /* 左側：立ち絵エリア */
+        .char-stage {
+            width: 350px;
+            border-right: 1px solid var(--dim-green);
+            display: flex;
+            justify-content: center;
+            align-items: flex-end; /* 足元を底に合わせる */
+            background: rgba(0, 255, 65, 0.02);
+            overflow: hidden;
         }
 
-        .choice-container { display: flex; flex-direction: column; gap: 10px; }
+        #char-img {
+            max-width: 100%;
+            max-height: 90%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 10px var(--neon-green));
+            transition: 0.5s; /* 切り替え時のフェード用 */
+        }
+
+        /* 右側：テキストエリア */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .system-msg { font-size: 0.7em; color: var(--warning-yellow); margin-bottom: 10px; }
+        #speaker-name { font-size: 1.4em; border-bottom: 2px solid var(--neon-green); margin-bottom: 15px; width: fit-content; }
+        
+        #dialogue-text {
+            font-size: 1.1em;
+            line-height: 1.6;
+            flex-grow: 1;
+        }
+
+        .choice-container { display: flex; flex-direction: column; gap: 8px; margin-top: 20px;}
 
         .choice-btn {
             background: transparent;
@@ -58,16 +79,12 @@
             cursor: pointer;
             text-align: left;
             font-family: 'Courier New', monospace;
-            transition: 0.3s;
         }
-
         .choice-btn:hover { background: var(--neon-green); color: #000; }
 
-        /* 通信中の演出 */
         .static {
-            position: absolute;
-            top:0; left:0; width:100%; height:100%;
-            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1), rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px);
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.05), rgba(0,0,0,0.05) 1px, transparent 1px, transparent 2px);
             pointer-events: none;
         }
     </style>
@@ -75,15 +92,19 @@
 <body>
     <div class="intro-container">
         <div class="static"></div>
-        <div class="system-msg">>> INCOMING COMMUNICATION: BRIEFING PHASE</div>
         
-        <div id="speaker-name">SYSTEM</div>
-        <div id="dialogue-text">ロード中...</div>
+        <div class="char-stage">
+            <img id="char-img" src="assets/placeholder.png" alt="Character Stand-in">
+        </div>
 
-        <div class="choice-container" id="choice-area">
-            </div>
+        <div class="main-content">
+            <div class="system-msg">>> CHANNEL OPEN: BRIEFING PHASE</div>
+            <div id="speaker-name">SYSTEM</div>
+            <div id="dialogue-text">Initializing communication...</div>
+
+            <div class="choice-container" id="choice-area"></div>
+        </div>
     </div>
-
     <script src="script_intro.js"></script>
 </body>
 </html>
