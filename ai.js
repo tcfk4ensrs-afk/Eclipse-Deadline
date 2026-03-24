@@ -12,9 +12,9 @@ export async function sendToAI(systemPrompt, userText, history) {
         throw new Error("APIキーが設定されていません。画面上部の設定から入力してください。");
     }
 
-    // --- 修正箇所：モデル名をフルパス(models/...)で指定 ---
-    const modelName = "models/gemini-1.5-flash";
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${apiKey}`;
+    // --- 修正ポイント：モデル名を 'models/gemini-1.5-flash' とフルパスで記述 ---
+    const modelPath = "models/gemini-1.5-flash";
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent?key=${apiKey}`;
 
     // APIに送るコンテンツの組み立て
     const contents = [
@@ -26,7 +26,7 @@ export async function sendToAI(systemPrompt, userText, history) {
             role: "model", 
             parts: [{ text: "了解しました。私は指示されたキャラクターとして、設定と秘密を守りながら、outer_voiceとinner_voiceの形式で対話に応じます。" }] 
         },
-        // 過去の履歴をGeminiのrole形式（user/model）に変換
+        // 過去の履歴をGeminiの形式に変換
         ...history.map(h => ({
             role: h.role === 'user' ? 'user' : 'model',
             parts: [{ text: h.text }]
@@ -46,17 +46,16 @@ export async function sendToAI(systemPrompt, userText, history) {
 
         const data = await response.json();
 
-        // API側からのエラー返却（キーの間違い、クォータ制限など）
+        // API側からのエラー返却（キーの間違い、制限など）
         if (data.error) {
-            console.error("Gemini API Error:", data.error);
+            console.error("Gemini API Error Details:", data.error);
             throw new Error(data.error.message);
         }
 
         // 応答が空、あるいは安全フィルターでブロックされた場合
         if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content) {
-            // 安全フィルターによるブロックが疑われる場合
             if (data.promptFeedback && data.promptFeedback.blockReason) {
-                throw new Error(`AIが応答を拒否しました（理由: ${data.promptFeedback.blockReason}）。表現を変えてみてください。`);
+                throw new Error(`AIが応答を拒否しました（理由: ${data.promptFeedback.blockReason}）。内容をマイルドにしてください。`);
             }
             throw new Error("AIから有効な応答が得られませんでした。");
         }
