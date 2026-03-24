@@ -32,7 +32,7 @@ const scenarios = [
     {
         id: "observer",
         name: "メイ",
-        image: "assets/mei.png",
+        image: "assets/mei.jpg",
         text: "「……システムログが一部書き換えられているわ。意図的なものよ。……怖い。誰かが私たちを見ている気がする。」",
         choices: [
             { text: "「私が守る、大丈夫だ」", affinity: "hero", nextText: "「……頼りにしてるわ。ログ解析、続けてみる。」" },
