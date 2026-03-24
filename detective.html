@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCC Terminal - Interrogation Phase</title>
+    <link rel="stylesheet" href="style_detective.css">
+</head>
+<body>
+    <div id="api-modal" class="modal">
+        <div class="modal-content">
+            <h3>SYSTEM: API KEY CONFIG</h3>
+            <p>Gemini APIキーを入力してください（テスト用）</p>
+            <input type="password" id="api-key-input" placeholder="AIzaSy...">
+            <div class="modal-btns">
+                <button onclick="saveApiKey()">SAVE & CONNECT</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div class="panel side-panel">
+            <h3>SECURED EVIDENCE</h3>
+            <div id="evidence-list">
+                </div>
+            <div class="status-box">
+                <p>STATUS: ANALYZING</p>
+                <button id="accuse-btn" class="danger-btn" onclick="game.startAccusation()">👉 真犯人を告発する</button>
+            </div>
+        </div>
+
+        <div class="panel main-panel">
+            <div id="main-menu">
+                <div class="header">
+                    <h2>INTERROGATION PROTOCOL</h2>
+                    <p>容疑者を選択して尋問を開始してください。</p>
+                </div>
+                <div id="character-list" class="char-grid"></div>
+            </div>
+
+            <div id="interrogation-room" style="display: none;">
+                <div class="chat-header">
+                    <button id="back-btn">⬅ 戻る</button>
+                    <span id="target-name">TARGET NAME</span>
+                </div>
+                <div id="chat-log"></div>
+                <div class="input-area">
+                    <input type="text" id="chat-input" placeholder="問い詰める内容を入力...">
+                    <button id="send-btn">SEND</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { sendToAI } from './ai.js';
+        window.sendToAI = sendToAI;
+    </script>
+    <script src="script_detective.js"></script>
+</body>
+</html>
