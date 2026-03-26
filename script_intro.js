@@ -5,8 +5,18 @@ const scenarios = [
         image: "assets/haris.jpg",
         text: "「……事態は深刻だ。医師の行方がわからず、燃料も不自然に減っている。君はこの状況、どう見ている？」",
         choices: [
-            { text: "「内部に犯人がいるはずです」", affinity: "suspicious", nextText: "「……やはり君もそう思うか。慎重に調査を頼む。」" },
-            { text: "「今は全員で協力すべきです」", affinity: "trust", nextText: "「……その通りだ。君の冷静さに期待しているよ。」" }
+            { 
+                text: "「内部に犯人がいるはずです」", 
+                affinity: "suspicious", 
+                nextText: "「……やはり君もそう思うか。……だが、私の部下たちを信じたい気持ちもある。」",
+                secondText: "「（……僅かに手が震えている）……すまない、少し疲れが溜まっているようだ。パトロールに戻るよ。」" 
+            },
+            { 
+                text: "「今は全員で協力すべきです」", 
+                affinity: "trust", 
+                nextText: "「……その通りだ。君の冷静さに期待しているよ。」",
+                secondText: "「この船の指揮権は私が握っている。君は君の職務を全うしてくれ……頼んだぞ。」" 
+            }
         ]
     },
     {
@@ -15,8 +25,18 @@ const scenarios = [
         image: "assets/noa.jpg",
         text: "「あぁん？ 忙しい時に通信してくんなよ。エンジンがイカれてんだ、俺が何とかするしかねぇんだよ。」",
         choices: [
-            { text: "「エンジンの異常について詳しく」", affinity: "professional", nextText: "「バイオ・コンバーターが空っぽなんだよ。誰かが捨てたとしか思えねぇ。」" },
-            { text: "「何か隠していることはないか？」", affinity: "hostile", nextText: "「は？ 俺を疑ってんのか？ 作業の邪魔だ、消えろ。」" }
+            { 
+                text: "「エンジンの異常について詳しく」", 
+                affinity: "professional", 
+                nextText: "「バイオ・コンバーターが空っぽなんだよ。誰かが手動でパージした形跡がある。」",
+                secondText: "「……とにかく、不審な奴がいたらそっちでマークしとけ。俺は忙しい。」" 
+            },
+            { 
+                text: "「何か隠していることはないか？」", 
+                affinity: "hostile", 
+                nextText: "「は？ 俺を疑ってんのか？ 作業の邪魔だ、消えろ。」",
+                secondText: "「……チッ、時間の無駄だ。通信を切るぞ。」" 
+            }
         ]
     },
     {
@@ -25,8 +45,18 @@ const scenarios = [
         image: "assets/riku.jpg",
         text: "「なぁ、もし地球に帰れなかったらどうする？ 俺はまだ、あっちでやり残したことがあるんだ……。」",
         choices: [
-            { text: "「必ず帰れる、私が保証する」", affinity: "friendly", nextText: "「……ありがとな。お前を信じるぜ。」" },
-            { text: "「やり残したこと、とは何だ？」", affinity: "wary", nextText: "「……別に、大したことじゃねぇよ。気にするな。」" }
+            { 
+                text: "「必ず帰れる、私が保証する」", 
+                affinity: "friendly", 
+                nextText: "「……ありがとな。お前を信じるぜ。家族をスラムに逆戻りさせるわけにはいかねぇんだ。」",
+                secondText: "「……そういえば、倉庫の荷物が少し動かされていた気がするんだ。……気のせいだといいんだが。」" 
+            },
+            { 
+                text: "「やり残したこと、とは何だ？」", 
+                affinity: "wary", 
+                nextText: "「……別に、大したことじゃねぇよ。気にするな。……ただ、少しばかり金が必要なだけだ。」",
+                secondText: "「（……視線を逸らす）……悪い、操縦系統のチェックがあるんだ。また後でな。」" 
+            }
         ]
     },
     {
@@ -35,8 +65,18 @@ const scenarios = [
         image: "assets/mei.jpg",
         text: "「……システムログが一部書き換えられているわ。意図的なものよ。……怖い。誰かが私たちを見ている気がする。」",
         choices: [
-            { text: "「私が守る、大丈夫だ」", affinity: "hero", nextText: "「……頼りにしてるわ。ログ解析、続けてみる。」" },
-            { text: "「君の操作ミスではないのか？」", affinity: "cold", nextText: "「……ひどいわね。私はプロよ。……もういいわ。」" }
+            { 
+                text: "「私が守る、大丈夫だ」", 
+                affinity: "hero", 
+                nextText: "「……頼りにしてるわ。……でも、私のアクセス権限じゃ見られない領域があるの。」",
+                secondText: "「……医師の端末も、さっきから妙な信号を出してる。……調べた方がいいかもしれないわ。」" 
+            },
+            { 
+                text: "「君の操作ミスではないのか？」", 
+                affinity: "cold", 
+                nextText: "「……ひどいわね。私はプロよ。……この船の中に『消したい事実』がある人間がいる……」",
+                secondText: "「……もういいわ。私は私の仕事をこなすだけ。」" 
+            }
         ]
     }
 ];
@@ -99,10 +139,18 @@ function showScenario() {
 async function selectChoice(choice) {
     const scenario = scenarios[currentStep];
     playerChoices[scenario.id] = choice.affinity;
+    
+    // 1ラリー目の反応
     document.getElementById('dialogue-text').innerText = choice.nextText;
-    document.getElementById('choice-area').innerHTML = "";
+    document.getElementById('choice-area').innerHTML = ""; // 選択肢を消す
 
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 2500)); // 2.5秒待機
+    
+    // 2ラリー目の「さらなる一言」（伏線が含まれる部分）
+    document.getElementById('dialogue-text').innerText = choice.secondText;
+
+    await new Promise(r => setTimeout(r, 3500)); // 少し長めに待機して読ませる
+    
     currentStep++;
     if (currentStep < scenarios.length) {
         showScenario();
@@ -110,7 +158,6 @@ async function selectChoice(choice) {
         finishIntro();
     }
 }
-
 function finishIntro() {
     localStorage.setItem('introAffinity', JSON.stringify(playerChoices));
     document.getElementById('speaker-name').innerText = "SYSTEM";
