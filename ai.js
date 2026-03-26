@@ -1,69 +1,67 @@
 /**
- * Gemini API への通信を行うモジュール
- * @param {string} systemPrompt - キャラクター設定やルール
- * @param {string} userText - プレイヤーの入力
- * @param {Array} history - 過去の対話履歴
+ * ミステリ/ai.js
+ * Netlify Functionsを経由してGemini APIと通信します。
+ * (未設定時は手動入力のAPIキーを使用して直接通信を試みます)
  */
 export async function sendToAI(systemPrompt, userText, history) {
-    // 優先順位: 1.手動入力(SessionStorage) 2.Netlify環境変数(もしあれば)
-    const apiKey = sessionStorage.getItem('GEMINI_API_KEY') || ""; 
-    
-    if (!apiKey) {
-        throw new Error("APIキーが設定されていません。画面上部の設定から入力してください。");
-    }
+    try {
+        // --- 1. Netlify Functions (/.netlify/functions/gemini) へのリクエストを試行 ---
+        const response = await fetch('/.netlify/functions/gemini', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                systemPrompt, 
+                userPrompt: userText, 
+                history 
+            })
+        });
 
-    // --- 修正ポイント：モデル名を 'models/gemini-1.5-flash' とフルパスで記述 ---
+        // Netlify Functions が存在し、正常に動作した場合はその結果を返す
+        if (response.ok) {
+            const data = await response.json();
+            return data.text || "応答がありませんでした。";
+        }
+
+        // --- 2. Netlify Functions がエラー、または存在しない場合のフォールバック ---
+        // (テストプレイ用に手動入力されたAPIキーを使用して直接通信)
+        const manualApiKey = sessionStorage.getItem('GEMINI_API_KEY');
+        if (!manualApiKey) {
+            throw new Error("Netlify Functionsが未設定、かつAPIキーも入力されていません。");
+        }
+
+        console.log("Netlify Functions not available. Falling back to direct API call...");
+        return await fetchDirectly(systemPrompt, userText, history, manualApiKey);
+
+    } catch (e) {
+        console.error("AI通信エラー:", e);
+        return `通信エラー: ${e.message}`;
+    }
+}
+
+/**
+ * 手動入力されたAPIキーを使用して直接Gemini APIを叩く（テスト用）
+ */
+async function fetchDirectly(systemPrompt, userText, history, apiKey) {
     const modelPath = "models/gemini-1.5-flash";
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent?key=${apiKey}`;
 
-    // APIに送るコンテンツの組み立て
     const contents = [
-        { 
-            role: "user", 
-            parts: [{ text: "【システム命令】あなたは物語の登場人物として振る舞います。以下の設定を厳守してください。\n" + systemPrompt }] 
-        },
-        { 
-            role: "model", 
-            parts: [{ text: "了解しました。私は指示されたキャラクターとして、設定と秘密を守りながら、outer_voiceとinner_voiceの形式で対話に応じます。" }] 
-        },
-        // 過去の履歴をGeminiの形式に変換
+        { role: "user", parts: [{ text: "【システム命令】設定を厳守せよ。\n" + systemPrompt }] },
+        { role: "model", parts: [{ text: "了解しました。" }] },
         ...history.map(h => ({
             role: h.role === 'user' ? 'user' : 'model',
             parts: [{ text: h.text }]
         })),
-        { 
-            role: "user", 
-            parts: [{ text: userText }] 
-        }
+        { role: "user", parts: [{ text: userText }] }
     ];
 
-    try {
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents })
-        });
+    const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents })
+    });
 
-        const data = await response.json();
-
-        // API側からのエラー返却（キーの間違い、制限など）
-        if (data.error) {
-            console.error("Gemini API Error Details:", data.error);
-            throw new Error(data.error.message);
-        }
-
-        // 応答が空、あるいは安全フィルターでブロックされた場合
-        if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content) {
-            if (data.promptFeedback && data.promptFeedback.blockReason) {
-                throw new Error(`AIが応答を拒否しました（理由: ${data.promptFeedback.blockReason}）。内容をマイルドにしてください。`);
-            }
-            throw new Error("AIから有効な応答が得られませんでした。");
-        }
-
-        return data.candidates[0].content.parts[0].text;
-
-    } catch (err) {
-        console.error("Fetch/API Error:", err);
-        throw err;
-    }
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    return data.candidates[0].content.parts[0].text;
 }
