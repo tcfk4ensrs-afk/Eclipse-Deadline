@@ -1,60 +1,55 @@
 class Game {
     constructor() {
-        // IDとファイル名の紐付け
         this.characterFiles = {
             engineer: "scenarios/characters/noa.json",
             captain: "scenarios/characters/haris.json",
             pilot: "scenarios/characters/riku.json",
             observer: "scenarios/characters/mei.json"
         };
-        // IDと画像パスの紐付け
         this.charImages = {
             engineer: "assets/noa.jpg",
             captain: "assets/haris.jpg",
             pilot: "assets/riku.jpg",
             observer: "assets/mei.jpg"
         };
-        this.characters = []; // ここにJSONの中身が入る
+        this.characters = [];
         this.currentCharacterId = null;
         this.isAiThinking = false;
+        
+        // 状態管理
         this.state = {
             evidences: JSON.parse(localStorage.getItem('securedEvidence')) || [],
             affinity: JSON.parse(localStorage.getItem('introAffinity')) || {},
-            history: {}
+            // キャラクターごとに配列を持つように初期化
+            history: {
+                engineer: [],
+                captain: [],
+                pilot: [],
+                observer: []
+            }
         };
     }
 
     async init() {
-        console.log("Game.init() started...");
         try {
-            // JSONの読み込みを試みる
             await this.loadAllCharacters();
             this.renderCharacterList();
             this.updateEvidenceUI();
             
-            console.log("Characters loaded:", this.characters);
-
-            // モーダルの表示制御
             const modal = document.getElementById('api-modal');
             if (sessionStorage.getItem('GEMINI_API_KEY')) {
-                console.log("API Key exists. Closing modal.");
                 if (modal) modal.style.display = 'none';
             } else {
-                console.log("No API Key. Opening modal.");
                 if (modal) modal.style.display = 'flex';
             }
         } catch (e) {
-            console.error("Init Error (Check if JSON files exist in scenarios/characters/):", e);
-            // エラー時もキー入力だけはできるようにする
-            const modal = document.getElementById('api-modal');
-            if (modal) modal.style.display = 'flex';
+            console.error("Init Error:", e);
         }
     }
 
     async loadAllCharacters() {
         const promises = Object.entries(this.characterFiles).map(async ([id, path]) => {
             const res = await fetch(path);
-            if (!res.ok) throw new Error(`Could not find ${path}`);
             const data = await res.json();
             return { id, ...data };
         });
@@ -68,15 +63,9 @@ class Game {
         this.characters.forEach(char => {
             const div = document.createElement('div');
             div.className = 'char-card';
-            
-            // 画像パスの取得
             const imgSrc = this.charImages[char.id] || "assets/default.jpg";
-            
-            // HTML構造を画像付きにアップデート
             div.innerHTML = `
-                <div class="char-thumb">
-                    <img src="${imgSrc}" alt="${char.name}">
-                </div>
+                <div class="char-thumb"><img src="${imgSrc}"></div>
                 <div class="char-details">
                     <h4>${char.name}</h4>
                     <p>${char.role || char.occupation}</p>
@@ -87,12 +76,38 @@ class Game {
         });
     }
 
-    updateEvidenceUI() {
-        const list = document.getElementById('evidence-list');
-        if (!list) return;
-        list.innerHTML = this.state.evidences.map(ev => 
-            `<div class="evidence-item">● ${ev}</div>`
-        ).join('') || '<p style="color:#555">NO DATA SECURED</p>';
+    /**
+     * 尋問画面を開く（ここでログを切り替える）
+     */
+    openInterrogation(id) {
+        this.currentCharacterId = id;
+        const char = this.characters.find(c => c.id === id);
+        
+        document.getElementById('main-menu').style.display = 'none';
+        document.getElementById('interrogation-room').style.display = 'flex';
+        
+        // ヘッダー更新
+        const targetNameElem = document.getElementById('target-name');
+        const imgSrc = this.charImages[id] || "assets/default.jpg";
+        targetNameElem.innerHTML = `
+            <div style="display:flex; align-items:center; gap:15px;">
+                <img src="${imgSrc}" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--neon-green); object-fit:cover;">
+                <span>${char.name}</span>
+            </div>
+        `;
+
+        // 【重要】そのキャラ専用のログを再描画する
+        this.refreshChatLog();
+    }
+
+    refreshChatLog() {
+        const logContainer = document.getElementById('chat-log');
+        logContainer.innerHTML = ''; // 一旦空にする
+        
+        const history = this.state.history[this.currentCharacterId] || [];
+        history.forEach(msg => {
+            this.renderSingleMessage(msg.role, msg.displayOuter, msg.displayInner);
+        });
     }
 
     async sendMessage() {
@@ -101,26 +116,24 @@ class Game {
         if (!text || this.isAiThinking) return;
 
         this.isAiThinking = true;
-        this.appendMessage('user', text);
+        this.appendMessage('user', text); // 自分の発言を保存・表示
         input.value = '';
 
         try {
             const char = this.characters.find(c => c.id === this.currentCharacterId);
+            // 今話しているキャラの履歴だけをAIに送る
             const history = this.state.history[this.currentCharacterId] || [];
             
-            // window.sendToAI が ai.js から正しく export/import されている必要があります
             const responseText = await window.sendToAI(this.constructPrompt(char), text, history);
-            this.appendMessage('model', responseText);
+            this.appendMessage('model', responseText); // AIの発言を保存・表示
         } catch (e) {
-            console.error("Chat Error:", e);
-            this.appendMessage('system', "COMMUNICATION ERROR: " + e.message);
+            this.appendMessage('system', "ERROR: " + e.message);
         } finally {
             this.isAiThinking = false;
         }
     }
 
     appendMessage(role, text) {
-        if (!this.state.history[this.currentCharacterId]) this.state.history[this.currentCharacterId] = [];
         let displayOuter = text, displayInner = "";
 
         if (role === 'model') {
@@ -130,7 +143,14 @@ class Game {
             displayInner = innerMatch ? innerMatch[1].trim() : "";
         }
 
-        this.state.history[this.currentCharacterId].push({ role, text, displayOuter, displayInner });
+        // 現在のキャラクターの履歴に追加
+        this.state.history[this.currentCharacterId].push({ 
+            role, 
+            text, 
+            displayOuter, 
+            displayInner 
+        });
+
         this.renderSingleMessage(role, displayOuter, displayInner);
     }
 
@@ -145,93 +165,52 @@ class Game {
         log.scrollTop = log.scrollHeight;
     }
 
+    /**
+     * プロンプトに「質問し返せ」という命令を追加
+     */
     constructPrompt(char) {
         const userAffinity = this.state.affinity[char.id] || "neutral";
         return `
 # Role
 あなたはSFミステリーの登場人物「${char.name}」です。
 # Profile
-- 役割: ${char.role || char.occupation}
-- 性格: ${char.personality}
-- 口調: ${char.style || char.talk_style}
-- あなたの秘密: ${JSON.stringify(char.secrets || char.secret_sin)}
+- 役割: ${char.role}
+- 性格: ${char.personality} / 口調: ${char.style}
+- 秘密: ${JSON.stringify(char.secrets || char.secret_sin)}
+- 嘘をつく条件: ${char.behavior_logic?.lie_condition || "常に保身を優先せよ"}
 # Context
-プレイヤーのあなたへの態度: ${userAffinity}
-提示されている証拠: ${this.state.evidences.join(', ')}
+- 管制官(プレイヤー)の態度: ${userAffinity}
+- 提示された証拠: ${this.state.evidences.join(', ')}
+
+# 重要ルール：逆質問と揺さぶり
+1. あなたはただ質問に答えるだけの機械ではありません。
+2. 自分が疑われたら、「${char.name}を疑うなんてどうかしている」「他の奴らの方が怪しい」と反論してください。
+3. **会話の終わりに、必ず管制官(プレイヤー)に対して、疑いを逸らすための質問や、他のクルーを疑わせるような揺さぶりの質問を投げかけてください。**
+4. 例: 「私を疑う前に、あの操縦士の隠し事について調べたらどうだ？」「君は本当に地上の人間なのか？」
+
 # Response Format
 outer_voice: [発言]
 inner_voice: [内心]
         `.trim();
     }
 
-    openInterrogation(id) {
-        this.currentCharacterId = id;
-        const char = this.characters.find(c => c.id === id);
-        
-        document.getElementById('main-menu').style.display = 'none';
-        document.getElementById('interrogation-room').style.display = 'flex';
-        
-        // 尋問ヘッダーの名前と画像を更新
-        const targetNameElem = document.getElementById('target-name');
-        const imgSrc = this.charImages[id] || "assets/default.jpg";
-        
-        targetNameElem.innerHTML = `
-            <div style="display:flex; align-items:center; gap:15px;">
-                <img src="${imgSrc}" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--neon-green); object-fit:cover;">
-                <span>${char.name}</span>
-            </div>
-        `;
-    }
-
-    startAccusation() {
-        const culprit = prompt("真犯人の名前を入力してください（ハリス/ノア/リク/メイ）");
-        if (culprit === "ノア") {
-            alert("正解！エンディングへ移行します。");
-            location.href = "true-end.html";
-        } else if (culprit) {
-            alert("誤認逮捕です。船は崩壊しました...");
-            location.href = "bad-end.html";
-        }
+    updateEvidenceUI() {
+        const list = document.getElementById('evidence-list');
+        if (!list) return;
+        list.innerHTML = this.state.evidences.map(ev => 
+            `<div class="evidence-item">● ${ev}</div>`
+        ).join('') || '<p style="color:#555">NO DATA SECURED</p>';
     }
 }
 
-// --- 初期化とグローバル登録 ---
-
-// インスタンスを先に作成
+// 起動処理
 const game = new Game();
 window.game = game;
-
-// 保存関数をグローバルに登録
-window.saveApiKey = () => {
-    const keyInput = document.getElementById('api-key-input');
-    const key = keyInput ? keyInput.value.trim() : "";
-    
-    if (key) {
-        sessionStorage.setItem('GEMINI_API_KEY', key);
-        console.log("API Key saved.");
-        
-        // モーダルを閉じる
-        const modal = document.getElementById('api-modal');
-        if (modal) modal.style.display = 'none';
-        
-        // 再初期化
-        game.init(); 
-    } else {
-        alert("キーを入力してください");
-    }
-};
-
 document.addEventListener('DOMContentLoaded', () => {
     game.init();
-    
-    const sendBtn = document.getElementById('send-btn');
-    if (sendBtn) sendBtn.onclick = () => game.sendMessage();
-    
-    const backBtn = document.getElementById('back-btn');
-    if (backBtn) {
-        backBtn.onclick = () => {
-            document.getElementById('interrogation-room').style.display = 'none';
-            document.getElementById('main-menu').style.display = 'block';
-        };
-    }
+    document.getElementById('send-btn').onclick = () => game.sendMessage();
+    document.getElementById('back-btn').onclick = () => {
+        document.getElementById('interrogation-room').style.display = 'none';
+        document.getElementById('main-menu').style.display = 'block';
+    };
 });
