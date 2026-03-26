@@ -1,45 +1,37 @@
-/**
- * ai.js
- * 手動入力されたAPIキーを使用してGemini APIと通信します。
- */
+// ai.js の中身を以下に差し替え（モデル名をURLに直接埋め込みます）
+
 export async function sendToAI(systemPrompt, userText, history) {
-    // 1. セッションストレージからキーを取得
     const apiKey = sessionStorage.getItem('GEMINI_API_KEY');
 
-    if (!apiKey || apiKey.trim() === "") {
-        return "エラー: APIキーが入力されていません。画面上部の設定から入力してください。";
+    if (!apiKey) {
+        return "エラー: APIキーが設定されていません。";
     }
 
     try {
-        console.log("Starting AI communication...");
-        
-        // --- 修正ポイント：URLの組み立てを最も標準的な形に ---
-        // v1beta のエンドポイント。モデル名は models/gemini-1.5-flash
+        // --- 修正の要：モデル名をURLのパスの一部として正しく配置 ---
+        // models/ の後に gemini-1.5-flash を続け、その後に :generateContent を置く
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`;
 
-        // リクエストボディの作成
         const requestBody = {
             contents: [
                 {
                     role: "user",
-                    parts: [{ text: "【システム設定】以下のキャラクター設定を守り、内心(inner_voice)と発言(outer_voice)を分けて回答せよ。\n\n" + systemPrompt }]
+                    parts: [{ text: "【重要設定】あなたはSFミステリーの登場人物として振る舞い、秘密を守りつつ対話してください。\n" + systemPrompt }]
                 },
                 {
                     role: "model",
-                    parts: [{ text: "了解しました。私はそのキャラクターになりきり、指示された形式で回答します。" }]
+                    parts: [{ text: "了解しました。設定に従い、キャラクターとして回答します。" }]
                 },
-                // 過去の会話履歴を追加
                 ...history.map(h => ({
                     role: h.role === 'user' ? 'user' : 'model',
                     parts: [{ text: h.text }]
                 })),
-                // 今回のユーザー入力
                 {
                     role: "user",
                     parts: [{ text: userText }]
                 }
             ],
-            // 安全設定をオフ（または最小）にする（ミステリーの「死体」などでブロックされないため）
+            // 殺人事件の描写でブロックされないための設定
             safetySettings: [
                 { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
                 { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
@@ -56,26 +48,19 @@ export async function sendToAI(systemPrompt, userText, history) {
 
         const data = await response.json();
 
-        // エラーレスポンスの処理
         if (!response.ok) {
-            console.error("Gemini API Error Response:", data);
-            if (data.error && data.error.message.includes("API key not valid")) {
-                return "エラー: APIキーが無効です。コピーミスがないか確認してください。";
-            }
-            return `エラー: ${data.error ? data.error.message : "通信失敗"}`;
+            console.error("API Error Detail:", data);
+            return `エラー: ${data.error ? data.error.message : "API通信に失敗しました"}`;
         }
 
-        // 応答の抽出
         if (data.candidates && data.candidates[0].content) {
             return data.candidates[0].content.parts[0].text;
         } else {
-            // 安全フィルターで消された場合など
-            console.warn("No candidates found. Full data:", data);
-            return "AIからの応答が空です（安全フィルターに抵触した可能性があります）。";
+            return "AIからの応答が空です（安全フィルター等で制限された可能性があります）";
         }
 
     } catch (e) {
-        console.error("Fatal AI Error:", e);
+        console.error("Fatal Error:", e);
         return `通信エラー: ${e.message}`;
     }
 }
