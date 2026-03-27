@@ -1,9 +1,13 @@
+/**
+ * PROJECT: ECLIPSE DEADLINE - Phase 01: Sector Investigation
+ */
+
 // --- グローバル変数の定義 ---
 let turn = 1;
 let selectedCharId = null;
 let movedChars = []; 
 let usedLocations = []; 
-const inventory = new Set();
+const inventory = []; // オブジェクト形式で保存するため配列に変更
 let engineerLiedAboutPod = false;
 let bodyDiscovered = false; 
 
@@ -18,7 +22,7 @@ const MASTER_DATA = {
         "脱出ポッド": { 
             item: "医師の遺体", 
             observation: "医師の遺体が隠されていた",
-            truth: "医師の遺体が隠されていた。後頭部に鈍器の痕があり、内部から無理やりロックされている。"
+            truth: "医師の遺体が隠されていた。後頭部に鈍器の痕がある。"
         },
         "操縦室": { 
             item: "ノイズ混じりの記録データ", 
@@ -27,7 +31,7 @@ const MASTER_DATA = {
         },
         "倉庫": { 
             item: "不自然に軽いコンテナ", 
-            observation: "リクが『重い荷物を隠した』と言っていた場所だが、中身は空っぽに見える。微かな金属音だけが響く。",
+            observation: "中身は空っぽに見える。微かな金属音だけが響く。",
             truth: "リクが隠したはずの鉱石と食料が全て消えている。ノアによって宇宙へ廃棄された形跡がある。"
         },
         "寝室": { 
@@ -40,23 +44,22 @@ const MASTER_DATA = {
             observation: "12:30頃、メインエンジンとは別の経路で一時的に大量の質量が排出された記録がある。",
             truth: "12:30に倉庫の全物資を『燃料パージ』として宇宙へ強制投棄した確定ログ。"
         }
-    };
+    }
+};
 
 /**
- * 【重要】windowオブジェクトに登録することでHTMLから呼べるようにする
+ * 要員選択
  */
 window.selectChar = function(id) {
     console.log("--- 要員選択: " + id + " ---");
 
-    // 派遣済み（LOCKED）なら何もしない
     if (movedChars.includes(id)) {
-        console.warn(id + " はロック中。");
+        console.warn(id + " はリチャージ中。");
         return;
     }
 
     selectedCharId = id;
 
-    // UIの選択表示をリセットして、選んだものだけ光らせる
     const allButtons = document.querySelectorAll('.char-btn');
     allButtons.forEach(btn => btn.classList.remove('active'));
 
@@ -81,29 +84,28 @@ window.executeInvestigate = async function(locName) {
     const char = MASTER_DATA.chars[selectedCharId];
     const loc = MASTER_DATA.locations[locName];
 
-    // 全ボタンを操作不能にする（二重送信防止）
     toggleAllControls(false);
 
     const loadingEntry = document.createElement('div');
     loadingEntry.className = "analyzing";
-    loadingEntry.innerHTML = `>> [派遣中] ${char.name} が ${locName} をスキャン中...`;
+    loadingEntry.innerHTML = `>> [スキャン中] ${char.name} が ${locName} を調査中...`;
     log.prepend(loadingEntry);
 
     // 演出用の待ち時間
-    await new Promise(resolve => setTimeout(resolve, 2500));
+    await new Promise(resolve => setTimeout(resolve, 2000));
     loadingEntry.classList.remove('analyzing');
     
     let resultMsg = "";
 
     // シナリオ分岐ロジック
     if (locName === "エンジンルーム") {
-        resultMsg = `[報告] ${char.name}: 「エンジンルームを確認。バイオ・コンバーターが強制排出されています。中身は……空です。」`;
-        addInventory(loc.item, loc.truth);
+        resultMsg = `[報告] ${char.name}: 「エネルギーログに不整合を確認。何かが『排出』されています。」`;
+        addInventory(loc.item, loc.observation);
     } 
     else if (char.isCulprit && locName === "脱出ポッド") {
         if (bodyDiscovered) {
-            resultMsg = `[報告] ${char.name}: 「……遺体を確認。燃料も抜かれています。逃げ場はありません。」`;
-            addInventory(loc.item, loc.truth);
+            resultMsg = `[報告] ${char.name}: 「……隠し通せませんか。ハッチの中に遺体があります。」`;
+            addInventory(loc.item, loc.observation);
         } else {
             resultMsg = `<span style="color:#fff;">[報告] ${char.name}: "${char.lieMsg}"</span>`;
             engineerLiedAboutPod = true;
@@ -113,9 +115,10 @@ window.executeInvestigate = async function(locName) {
         resultMsg = `<span style="color:#fff;">[報告] ${char.name}: "${char.lieMsg}"</span>`;
     }
     else {
-        resultMsg = `<span style="color:var(--neon-green);">[報告] ${char.name}: 「${locName}で『${loc.item}』を発見。${loc.truth}」</span>`;
+        // 正常な発見（曖昧な観測事実を表示）
+        resultMsg = `<span style="color:var(--neon-green);">[報告] ${char.name}: 「${locName}で『${loc.item}』を確保。${loc.observation}」</span>`;
         if (locName === "脱出ポッド") bodyDiscovered = true;
-        addInventory(loc.item, loc.truth);
+        addInventory(loc.item, loc.observation);
     }
 
     loadingEntry.innerHTML = `<small>T${turn}: ${char.name} の報告</small><br>${resultMsg}`;
@@ -134,11 +137,7 @@ window.executeInvestigate = async function(locName) {
     }
 };
 
-/**
- * ボタンの有効/無効切り替え
- */
 function refreshUI() {
-    // 4人全員使ったらリセット
     if (movedChars.length >= 4) {
         movedChars = []; 
     }
@@ -161,7 +160,6 @@ function refreshUI() {
         btn.classList.remove('active');
     });
 
-    // 場所ボタンのロック
     document.querySelectorAll('.loc-btn').forEach(btn => {
         const locName = btn.innerText;
         btn.disabled = usedLocations.includes(locName);
@@ -172,11 +170,20 @@ function toggleAllControls(enable) {
     document.querySelectorAll('.loc-btn, .char-btn').forEach(btn => btn.disabled = !enable);
 }
 
+/**
+ * インベントリ追加ロジック
+ * 名前と詳細をセットで保存
+ */
 function addInventory(name, detail) {
-    if (inventory.has(name)) return;
-    inventory.add(name);
+    // 重複チェック
+    const alreadyHas = inventory.some(item => item.name === name);
+    if (alreadyHas) return;
+
+    inventory.push({ name, detail });
+    
     const list = document.getElementById('evidence-list');
-    if (inventory.size === 1) list.innerHTML = "";
+    if (inventory.length === 1) list.innerHTML = "";
+    
     const div = document.createElement('div');
     div.className = "evidence-item";
     div.innerHTML = `<strong>● ${name}</strong><p>${detail}</p>`;
@@ -189,16 +196,19 @@ function endFirstPhase() {
     let finalHtml = "";
 
     if (engineerLiedAboutPod && !bodyDiscovered) {
-        finalHtml = "<div style='color:var(--error-red); text-align:center;'><h2>MISSION FAILED</h2><p>犯人の隠蔽工作を阻止できませんでした。</p></div>";
-        setTimeout(() => { location.href = "badend1.html"; }, 5000);
+        finalHtml = "<div style='color:var(--error-red); text-align:center;'><h2>MISSION FAILED</h2><p>致命的な証拠を見逃しました。犯人は逃亡準備を終えています。</p></div>";
+        setTimeout(() => { location.href = "bad-end.html"; }, 4000);
     } else {
-        finalHtml = "<div style='color:var(--warning-yellow); text-align:center;'><h2>PHASE 01 COMPLETE</h2><p>証拠を保存しました。個別尋問へ移行します。</p></div>";
+        finalHtml = "<div style='color:var(--warning-yellow); text-align:center;'><h2>INVESTIGATION COMPLETE</h2><p>証拠をアーカイブしました。個別尋問プロトコルを開始します。</p></div>";
         const btn = document.createElement('button');
         btn.className = "char-btn active";
+        btn.style.width = "100%";
         btn.style.justifyContent = "center";
-        btn.innerText = ">> 尋問を開始する";
+        btn.style.marginTop = "15px";
+        btn.innerText = ">> 尋問フェーズへ移行";
         btn.onclick = () => {
-            localStorage.setItem('securedEvidence', JSON.stringify(Array.from(inventory)));
+            // 第2フェーズのためにインベントリを保存
+            localStorage.setItem('securedEvidence', JSON.stringify(inventory));
             location.href = "detective.html";
         };
         log.prepend(btn);
@@ -208,5 +218,4 @@ function endFirstPhase() {
     log.prepend(endContainer);
 }
 
-// 初期化
 window.onload = refreshUI;
