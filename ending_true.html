@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRUE END - ECLIPSE DEADLINE</title>
+    <style>
+        :root {
+            --neon-green: #00ff9d;
+            --deep-blue: #020b1a;
+            --text-gray: #a0a0a0;
+        }
+
+        body {
+            background-color: var(--deep-blue);
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 宇宙の星屑背景アニメーション */
+        .stars {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(white, rgba(255,255,255,0) 2px) 0 0 / 50px 50px;
+            opacity: 0.1;
+            animation: moveStars 100s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes moveStars {
+            from { background-position: 0 0; }
+            to { background-position: 1000px 1000px; }
+        }
+
+        .container {
+            max-width: 800px;
+            padding: 40px;
+            text-align: center;
+            border: 1px solid var(--neon-green);
+            background: rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 20px rgba(0, 255, 157, 0.2);
+            animation: fadeIn 3s ease-out;
+        }
+
+        .status-msg {
+            color: var(--neon-green);
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+            border-bottom: 1px solid var(--neon-green);
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+
+        .story-text {
+            line-height: 1.8;
+            font-size: 1.1rem;
+            text-align: left;
+            margin-bottom: 40px;
+            color: #e0e0e0;
+        }
+
+        .survivors {
+            margin-top: 30px;
+            padding: 15px;
+            background: rgba(0, 255, 157, 0.1);
+            border-left: 4px solid var(--neon-green);
+        }
+
+        .btn-restart {
+            background: transparent;
+            color: var(--neon-green);
+            border: 1px solid var(--neon-green);
+            padding: 10px 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-restart:hover {
+            background: var(--neon-green);
+            color: #000;
+            box-shadow: 0 0 15px var(--neon-green);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .highlight {
+            color: var(--neon-green);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stars"></div>
+
+    <div class="container">
+        <div class="status-msg">[TERMINAL LOG: COMMAND ACCEPTED]</div>
+        
+        <div class="story-text">
+            背後でノアの絶叫が響く。だが、リアクターの重厚なハッチが閉まると、それは真空に消えた。<br><br>
+            バイオ・コンバーターが「2ユニット分」の新鮮な有機質量を検知。エンジンの鼓動が宇宙を震わせる。かつて医師だったものと、殺人者だったものが、青白いプラズマへと変換されていく。<br><br>
+            <span class="highlight">「……再起動成功。加速を開始します」</span><br><br>
+            メイの無機質な声が響く。心中プログラムは解除され、船は光の筋となった。<br>
+            地球に帰還したあなたは英雄として迎えられるだろう。動力炉に放り込んだ「二人」のことは、報告書には一行も記されない。<br><br>
+            エクリプス号の秘密は、永遠にあなたの闇の中に。
+        </div>
+
+        <div class="survivors">
+            <strong>CURRENT SURVIVORS:</strong><br>
+            HARRIS(Captain), RIKU(Pilot), MEI(Observer), AND YOU.
+        </div>
+
+        <div style="margin-top: 50px;">
+            <p style="color: var(--text-gray); font-size: 0.8rem;">-- TRUE END: THE PRICE OF SURVIVAL --</p>
+            <a href="index.html" class="btn-restart">TITLE MENU</a>
+        </div>
+    </div>
+
+    <script>
+        // シンプルなタイプライター演出を入れる場合はここにJS
+        console.log("Mission Accomplished, GCC.");
+    </script>
+</body>
+</html>
