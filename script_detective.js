@@ -23,7 +23,7 @@ class Game {
         
         // 第1フェーズからの引き継ぎデータ
         this.state = {
-            evidences: JSON.parse(localStorage.getItem('securedEvidence')) || [],
+            evidences: [],
             affinity: JSON.parse(localStorage.getItem('introAffinity')) || {},
             history: {
                 engineer: [], captain: [], pilot: [], observer: []
@@ -42,7 +42,11 @@ class Game {
 
     async init() {
         try {
+            console.log("System Initializing...");
+            // キャラクタデータのロードを待機
             await this.loadAllCharacters();
+            
+            // UIの初期描画
             this.renderCharacterList();
             this.updateEvidenceUI();
             
@@ -52,6 +56,7 @@ class Game {
             } else {
                 if (modal) modal.style.display = 'flex';
             }
+            console.log("System Ready.");
         } catch (e) {
             console.error("Init Error:", e);
         }
@@ -60,6 +65,7 @@ class Game {
     async loadAllCharacters() {
         const promises = Object.entries(this.characterFiles).map(async ([id, path]) => {
             const res = await fetch(path);
+            if (!res.ok) throw new Error(`Failed to load ${path}`);
             const data = await res.json();
             return { id, ...data };
         });
@@ -102,11 +108,14 @@ class Game {
             </div>
         `;
 
+        // 尋問開始時に証拠UIを最新にする
+        this.updateEvidenceUI();
         this.refreshChatLog();
     }
 
     refreshChatLog() {
         const logContainer = document.getElementById('chat-log');
+        if (!logContainer) return;
         logContainer.innerHTML = ''; 
         const history = this.state.history[this.currentCharacterId] || [];
         history.forEach(msg => {
@@ -130,6 +139,7 @@ class Game {
             const responseText = await window.sendToAI(this.constructPrompt(char), text, history);
             this.appendMessage('model', responseText);
             
+            // AIの回答後に証拠のアップデートチェック
             this.checkTruthUpdate(responseText);
         } catch (e) {
             this.appendMessage('system', "ERROR: " + e.message);
@@ -149,31 +159,11 @@ class Game {
         const currentId = this.currentCharacterId;
 
         const revelationTriggers = [
-            { 
-                key: "ラベルのない液体瓶", 
-                informant: "pilot", 
-                triggers: ["酒の匂い", "アルコール", "飲んでやがった"] 
-            },
-            { 
-                key: "不自然に軽いコンテナ", 
-                informant: "captain", 
-                triggers: ["昨日は重かった", "備蓄されていたはず", "中身が空"] 
-            },
-            { 
-                key: "コンテナ奥の断線したコード", 
-                informant: "observer", 
-                triggers: ["リクが倉庫に入った瞬間", "通信が断絶", "物理的な切断"] 
-            },
-            { 
-                key: "ノイズ混じりの記録データ", 
-                informant: "engineer", 
-                triggers: ["メイがログに触っていた", "彼女なら消せる", "ハッキングの形跡"] 
-            },
-            {
-                key: "医師の遺体",
-                informant: "observer", 
-                triggers: ["ノアがポッドへ", "二人の反応", "ハッチを閉めた"]
-            }
+            { key: "ラベルのない液体瓶", informant: "pilot", triggers: ["酒の匂い", "アルコール", "飲んでやがった"] },
+            { key: "不自然に軽いコンテナ", informant: "captain", triggers: ["昨日は重かった", "備蓄されていたはず", "中身が空"] },
+            { key: "コンテナ奥の断線したコード", informant: "observer", triggers: ["リクが倉庫に入った瞬間", "通信が断絶", "物理的な切断"] },
+            { key: "ノイズ混じりの記録データ", informant: "engineer", triggers: ["メイがログに触っていた", "彼女なら消せる", "ハッキングの形跡"] },
+            { key: "医師の遺体", informant: "observer", triggers: ["ノアがポッドへ", "二人の反応", "ハッチを閉めた"] }
         ];
 
         revelationTriggers.forEach(item => {
@@ -184,7 +174,7 @@ class Game {
     }
 
     updateEvidenceToTruth(name) {
-        const index = this.state.evidences.findIndex(e => e.name === name);
+        const index = this.state.evidences.findIndex(e => (e.name === name || e.item === name));
         if (index !== -1 && this.truthReference[name]) {
             const currentDetail = this.state.evidences[index].detail;
             const newTruth = this.truthReference[name];
@@ -205,6 +195,10 @@ class Game {
             const innerMatch = text.match(/inner_voice[:：]\s*([\s\S]*)/i);
             displayOuter = outerMatch ? outerMatch[1].trim() : text;
             displayInner = innerMatch ? innerMatch[1].trim() : "";
+        }
+
+        if (!this.state.history[this.currentCharacterId]) {
+            this.state.history[this.currentCharacterId] = [];
         }
 
         this.state.history[this.currentCharacterId].push({ 
@@ -228,11 +222,10 @@ class Game {
         const history = this.state.history[char.id] || [];
         const talkCount = history.filter(h => h.role === 'model').length; 
         const userAffinity = this.state.affinity[char.id] || "neutral";
-        const evidenceString = this.state.evidences.map(e => `${e.name}(内容:${e.detail})`).join(', ');
+        const evidenceString = this.state.evidences.map(e => `${e.name || e.item}(内容:${e.detail})`).join(', ');
 
         let specialInstruction = "";
         
-        // 会話回数に応じた動的指示と伏線（有機質量2ユニットの示唆）
         if (talkCount >= 5 && talkCount < 10) {
             specialInstruction = `
 - 【状況変化】あなたとプレイヤーの会話は5回を超えました。少し緊張が解けたか、あるいは隠しきれない不安から、他人の行動に関する『些細な違和感』を会話の端々に混ぜてください。
@@ -265,13 +258,25 @@ ${specialInstruction}
     updateEvidenceUI() {
         const list = document.getElementById('evidence-list');
         if (!list) return;
-        list.innerHTML = this.state.evidences.map(ev => `
-            <div class="evidence-item" onclick="game.presentEvidence('${ev.name}')" style="cursor:pointer;">
-                <strong>● ${ev.name}</strong>
-                <p>${ev.detail}</p>
-                <small style="color:var(--neon-green); font-size:0.7em;">>> 突きつける</small>
-            </div>
-        `).join('') || '<p style="color:#555">NO DATA SECURED</p>';
+
+        // localStorageから最新データを同期
+        this.state.evidences = JSON.parse(localStorage.getItem('securedEvidence')) || [];
+        
+        if (this.state.evidences.length === 0) {
+            list.innerHTML = '<p style="color:#555">NO DATA SECURED</p>';
+            return;
+        }
+
+        list.innerHTML = this.state.evidences.map(ev => {
+            const name = ev.name || ev.item || "不明なアイテム";
+            return `
+                <div class="evidence-item" onclick="game.presentEvidence('${name}')" style="cursor:pointer; border:1px solid #333; margin-bottom:5px; padding:8px; border-radius:4px; background:rgba(255,255,255,0.05);">
+                    <strong style="color:var(--neon-green);">● ${name}</strong>
+                    <p style="font-size:0.85em; margin:4px 0;">${ev.detail}</p>
+                    <small style="color:#777;">>> 突きつける</small>
+                </div>
+            `;
+        }).join('');
     }
 }
 
