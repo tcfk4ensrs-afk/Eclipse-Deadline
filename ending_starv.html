@@ -9,6 +9,7 @@
             --warning-amber: #ffb300;
             --deep-space: #0a0800;
             --text-gray: #888;
+            --ghost-white: rgba(255, 255, 255, 0.6);
         }
 
         body {
@@ -22,6 +23,7 @@
             justify-content: center;
             height: 100vh;
             overflow: hidden;
+            transition: background-color 5s ease;
         }
 
         /* 停滞した宇宙の背景 */
@@ -41,6 +43,8 @@
             background: rgba(10, 8, 0, 0.9);
             box-shadow: 0 0 30px rgba(255, 179, 0, 0.1);
             animation: flicker 4s infinite;
+            position: relative;
+            z-index: 10;
         }
 
         @keyframes flicker {
@@ -66,6 +70,31 @@
             color: #d0d0d0;
         }
 
+        /* メイの静かな狂気 */
+        .low-power {
+            color: var(--warning-amber);
+            font-weight: bold;
+            text-shadow: 0 0 5px var(--warning-amber);
+            display: block;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeInMei 3s forwards 2s; /* 2秒後にフェードイン */
+        }
+
+        .whisper {
+            display: block;
+            font-size: 1.4rem;
+            margin-top: 15px;
+            color: var(--ghost-white);
+            text-shadow: 0 0 15px var(--ghost-white);
+            font-style: italic;
+            letter-spacing: 5px;
+        }
+
+        @keyframes fadeInMei {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .failure-log {
             margin-top: 30px;
             padding: 15px;
@@ -74,6 +103,18 @@
             font-size: 0.9rem;
             text-align: left;
             color: var(--warning-amber);
+            opacity: 1;
+            transition: opacity 5s ease;
+        }
+
+        /* 狂気演出：じわじわと暗くなる */
+        .darkening .container {
+            border-color: #333;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 1);
+        }
+
+        .darkening .status-msg, .darkening .failure-log {
+            opacity: 0.2;
         }
 
         .btn-restart {
@@ -87,6 +128,8 @@
             text-decoration: none;
             display: inline-block;
             margin-top: 20px;
+            opacity: 0;
+            animation: fadeInBtn 2s forwards 6s; /* 全てが暗くなった後に表示 */
         }
 
         .btn-restart:hover {
@@ -94,16 +137,28 @@
             color: #000;
         }
 
-        .low-power {
-            color: var(--warning-amber);
-            font-weight: bold;
-            text-shadow: 0 0 5px var(--warning-amber);
+        /* 視覚的ノイズ：古いビデオのような走査線 */
+        .scanline {
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 179, 0, 0.1);
+            position: fixed;
+            z-index: 100;
+            pointer-events: none;
+            animation: scan 4s linear infinite;
         }
+
+        @keyframes scan {
+            from { top: -10%; }
+            to { top: 110%; }
+        }
+
     </style>
 </head>
 <body>
 
     <div class="stars"></div>
+    <div class="scanline"></div>
 
     <div class="container">
         <div class="status-msg">[TERMINAL LOG: RE-IGNITION FAILED (LOW CALORIE)]</div>
@@ -112,8 +167,14 @@
             ノアをリアクターへ放り込み、もう一つのスロットには「柱」を詰め込んだ。<br><br>
             エンジンは一瞬、力強い咆哮を上げたが……すぐに頼りない低音へと変わる。木材と人間一人分では、地球へ届くための熱量には到底足りなかった。<br><br>
             船は加速しきれず、暗黒の虚空をゆっくりと漂い始める。<br><br>
-            <span class="low-power">「……計算ミスね。食料が尽きるのが先か、酸素が尽きるのが先か……」</span><br><br>
-            メイの自嘲気味な笑いが響く。リクは消えた家族への金を叫び、ハリスは空になった酒瓶を抱えて泣いている。
+            
+            <span class="low-power">
+                「……計算ミスね。食料が尽きるのが先か、酸素が尽きるのが先か……」
+                <span class="whisper">……うふふ。ねぇ、静かで素敵だと思わない？</span>
+            </span>
+
+            <br>
+            メイの自嘲気味な笑いが響く。リクは消えた家族への金を叫び、ハリスは空になった酒瓶を抱えて泣いている。<br>
             地球の青い光を遠くに眺めながら、あなたたちは緩やかな死を待つことになる。
         </div>
 
@@ -129,6 +190,16 @@
             <a href="index.html" class="btn-restart">RETRY FROM TITLE</a>
         </div>
     </div>
+
+    <script>
+        // ページ読み込み後、じわじわと絶望感を出すために背景をさらに暗くし、UIを風化させる
+        window.onload = () => {
+            setTimeout(() => {
+                document.body.classList.add('darkening');
+                console.log("Entropy increasing...");
+            }, 3000);
+        };
+    </script>
 
 </body>
 </html>
