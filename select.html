@@ -42,7 +42,7 @@
 
         .game-container {
             display: grid;
-            grid-template-columns: 350px 1fr 320px; /* 左パネルを少し広く */
+            grid-template-columns: 350px 1fr 320px;
             gap: 20px;
             width: 96vw;
             height: 92vh;
@@ -62,12 +62,9 @@
 
         h3 { border-bottom: 1px solid var(--neon-green); padding-bottom: 8px; margin-top: 0; font-size: 1.1em; letter-spacing: 2px; z-index: 2; }
 
-        /* 背景画像エリアは削除 */
-
-        /* 要員ボタンの修正（画像を表示するため） */
         .char-btn {
             width: 100%;
-            height: 80px; /* 高さを固定 */
+            height: 80px;
             margin: 10px 0;
             background: transparent;
             color: var(--neon-green);
@@ -75,16 +72,15 @@
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
-            align-items: center; /* 上下中央 */
-            padding: 0; /* 余白を一旦リセット */
+            align-items: center;
+            padding: 0;
             overflow: hidden;
             position: relative;
             z-index: 2;
         }
 
-        /* [新規] ボタン内の顔写真スペース */
         .char-img-thumb {
-            width: 80px; /* ボタンの高さと同じ正方形 */
+            width: 80px;
             height: 80px;
             border-right: 1px solid var(--neon-green);
             overflow: hidden;
@@ -96,13 +92,12 @@
 
         .char-img-thumb img {
             width: auto;
-            height: 100%; /* 縦幅に合わせる */
-            min-width: 100%; /* 横が足りない場合は横幅に合わせる */
-            object-fit: cover; /* 両サイドをトリミングして正方形に収める */
-            filter: sepia(1) hue-rotate(90deg) contrast(1.2); /* 🟢ここがポイント：全体を緑っぽくする */
+            height: 100%;
+            min-width: 100%;
+            object-fit: cover;
+            filter: sepia(1) hue-rotate(90deg) contrast(1.2);
         }
 
-        /* [新規] ボタン内のテキストエリア */
         .char-info {
             flex: 1;
             padding: 0 15px;
@@ -121,12 +116,12 @@
             font-weight: bold;
             box-shadow: 0 0 20px var(--neon-green);
         }
-        /* active時の画像フィルターを解除 */
+
         .char-btn.active .char-img-thumb img {
             filter: none;
             border-right: 1px solid #000;
         }
-        /* active時のテキスト色調整 */
+
         .char-btn.active .char-name-label { color: #000; }
         .char-btn.active .status-label { border-color: #000; color: #000; }
 
@@ -135,7 +130,39 @@
         .status-recharging { border-color: #555; color: #555; background: #111; }
 
         .char-btn:disabled { opacity: 0.4; cursor: not-allowed; border-color: #444; }
-        .char-btn:disabled .char-img-thumb img { filter: sepia(1) hue-rotate(90deg) contrast(0.8) brightness(0.5); }
+
+        /* 🟢 メイのボタン下の地図エリアのデザイン */
+        .char-map-container {
+            margin-top: 5px;
+            border: 1px solid var(--neon-green);
+            background: #000;
+            padding: 5px;
+            box-shadow: 0 0 10px var(--dim-green);
+            z-index: 2;
+        }
+
+        .char-map-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+            filter: sepia(1) hue-rotate(90deg) brightness(0.7) contrast(1.2);
+            cursor: zoom-in;
+            transition: 0.3s;
+        }
+
+        .char-map-container img:hover {
+            filter: none;
+            brightness: 1;
+        }
+
+        .map-label {
+            font-size: 0.6em;
+            color: var(--neon-green);
+            text-align: center;
+            margin-bottom: 3px;
+            display: block;
+            letter-spacing: 1px;
+        }
 
         .location-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; z-index: 2; }
         .loc-btn {
@@ -162,9 +189,6 @@
             border-radius: 4px;
             z-index: 2;
         }
-
-        .analyzing { animation: blink 1s infinite; color: var(--warning-yellow); text-align: center; padding: 10px; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
         .evidence-item {
             margin-bottom: 15px;
@@ -224,6 +248,11 @@
                         <span class="status-label status-available" id="status-observer">AVAILABLE</span>
                     </div>
                 </button>
+
+                <div class="char-map-container">
+                    <span class="map-label">INTERNAL SCHEMATIC (MAP-02)</span>
+                    <img src="assets/map2.jpg" alt="Ship Map 2" title="Click to enlarge" onclick="window.open(this.src)">
+                </div>
                 
             </div>
             <div style="margin-top: auto; font-size: 0.7em; color: #888; border-top: 1px solid #333; padding-top: 10px;">
