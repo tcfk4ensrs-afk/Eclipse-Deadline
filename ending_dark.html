@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DARK END - ECLIPSE DEADLINE</title>
+    <style>
+        :root {
+            --blood-red: #8b0000;
+            --error-red: #ff3333;
+            --void-black: #050000;
+            --text-gray: #666;
+        }
+
+        body {
+            background-color: var(--void-black);
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 赤く染まった星々の背景 */
+        .stars {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(white, rgba(255,255,255,0) 2px) 0 0 / 70px 70px;
+            opacity: 0.1;
+            filter: sepia(100%) saturate(500%) hue-rotate(-50deg);
+            animation: moveStars 10s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes moveStars {
+            from { transform: scale(1); opacity: 0.1; }
+            to { transform: scale(1.5); opacity: 0; }
+        }
+
+        .container {
+            max-width: 800px;
+            padding: 40px;
+            text-align: center;
+            border: 1px solid var(--blood-red);
+            background: rgba(0, 0, 0, 0.9);
+            box-shadow: 0 0 40px rgba(139, 0, 0, 0.4);
+            position: relative;
+        }
+
+        /* 警告帯の演出 */
+        .container::before, .container::after {
+            content: "CRITICAL MORAL BREACH";
+            position: absolute;
+            width: 100%;
+            background: var(--blood-red);
+            color: #000;
+            font-weight: bold;
+            font-size: 0.7rem;
+            letter-spacing: 5px;
+            left: 0;
+        }
+        .container::before { top: 0; }
+        .container::after { bottom: 0; }
+
+        .status-msg {
+            color: var(--error-red);
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+            border-bottom: 1px solid var(--error-red);
+            display: inline-block;
+            padding-bottom: 5px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .story-text {
+            line-height: 2;
+            font-size: 1.1rem;
+            text-align: left;
+            margin-bottom: 40px;
+            color: #ccc;
+        }
+
+        .guilt-log {
+            margin-top: 30px;
+            padding: 15px;
+            background: rgba(255, 0, 0, 0.05);
+            border: 1px dashed var(--blood-red);
+            font-style: italic;
+            color: var(--error-red);
+        }
+
+        .btn-restart {
+            background: transparent;
+            color: var(--error-red);
+            border: 1px solid var(--error-red);
+            padding: 10px 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+        }
+
+        .btn-restart:hover {
+            background: var(--error-red);
+            color: #000;
+            box-shadow: 0 0 20px var(--error-red);
+        }
+
+        .villain-quote {
+            color: #888;
+            border-left: 2px solid #444;
+            padding-left: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stars"></div>
+
+    <div class="container">
+        <div class="status-msg">[TERMINAL LOG: COMMAND EXECUTED]</div>
+        
+        <div class="story-text">
+            凄まじい衝撃。船は猛烈な勢いで加速を開始した。<br><br>
+            だが、あなたの手は震え、耳には先ほど動力炉に放り込んだ「無実の仲間の悲鳴」がこびりついている。<br><br>
+            犯人であるノアは、拘束されたまま薄笑いを浮かべてあなたを見ている。
+
+            <div class="villain-quote">
+                「素晴らしい判断だ、管制官。君もこちら側の人間だったというわけだ」
+            </div>
+
+            地球へ戻れば、あなたは船を救った英雄だ。<br>
+            だが、失われた仲間の席を見るたび、あなたは思い出すだろう。自分が生き残るいために、誰を殺したのかを。
+        </div>
+
+        <div class="guilt-log">
+            警告: 倫理プロトコルが恒久的に破損しました。<br>
+            あなたは帰還しますが、かつてのあなたではありません。
+        </div>
+
+        <div style="margin-top: 50px;">
+            <p style="color: var(--text-gray); font-size: 0.8rem;">-- ENDING: DARK HERO (汚れし英雄) --</p>
+            <a href="index.html" class="btn-restart">RETURN TO TITLE</a>
+        </div>
+    </div>
+
+</body>
+</html>
