@@ -23,6 +23,46 @@
             color: #000;
             box-shadow: 0 0 15px #ff3333;
         }
+
+        /* 🟢 船内マップエリアの追加スタイル */
+        .map-panel {
+            margin-top: 20px;
+            border: 1px solid #00ff41;
+            background: rgba(0, 5, 0, 0.9);
+            padding: 10px;
+            box-shadow: inset 0 0 10px rgba(0, 255, 65, 0.2);
+        }
+
+        .map-panel h4 {
+            font-size: 0.7rem;
+            color: #00ff41;
+            margin: 0 0 8px 0;
+            letter-spacing: 1px;
+            text-align: center;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.3);
+            padding-bottom: 4px;
+        }
+
+        .map-container {
+            width: 100%;
+            overflow: hidden;
+            border: 1px solid #333;
+            cursor: zoom-in;
+        }
+
+        .map-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+            /* 🟢 尋問フェーズは少し緊迫感を出すためセピア/グリーンのフィルターを適用 */
+            filter: sepia(1) hue-rotate(90deg) brightness(0.8) contrast(1.2);
+            transition: 0.3s;
+        }
+
+        .map-container img:hover {
+            filter: none;
+            brightness: 1.1;
+        }
     </style>
 </head>
 <body>
@@ -41,6 +81,13 @@
         <div class="panel side-panel">
             <h3>SECURED EVIDENCE</h3>
             <div id="evidence-list"></div>
+
+            <div class="map-panel">
+                <h4>SHIP SCHEMATIC: MAP-01</h4>
+                <div class="map-container">
+                    <img src="assets/map1.jpg" alt="Ship Map 1" onclick="window.open(this.src)">
+                </div>
+            </div>
             
             <div class="status-box">
                 <p>STATUS: ANALYZING</p>
