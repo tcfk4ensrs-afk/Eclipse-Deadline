@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DRIFT END - ECLIPSE DEADLINE</title>
+    <style>
+        :root {
+            --fire-orange: #ff4500;
+            --heat-yellow: #ffcc00;
+            --void-black: #000000;
+        }
+
+        body {
+            background-color: var(--void-black);
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 燃える大気圏の背景演出 */
+        .reentry-fire {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, transparent, rgba(255, 69, 0, 0.2), rgba(255, 204, 0, 0.4));
+            z-index: -1;
+            animation: heatWave 2s ease-in-out infinite;
+        }
+
+        @keyframes heatWave {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+
+        /* 降り注ぐ火の粉 */
+        .sparks {
+            position: absolute;
+            top: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, var(--heat-yellow) 1px, transparent 1px) 0 0 / 20px 20px;
+            opacity: 0.3;
+            animation: fall 1s linear infinite;
+        }
+
+        @keyframes fall {
+            from { transform: translateY(-100vh); }
+            to { transform: translateY(100vh); }
+        }
+
+        .container {
+            max-width: 800px;
+            padding: 40px;
+            text-align: center;
+            border: 2px solid var(--fire-orange);
+            background: rgba(0, 0, 0, 0.85);
+            box-shadow: 0 0 50px rgba(255, 69, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .status-msg {
+            color: var(--fire-orange);
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            letter-spacing: 5px;
+            font-weight: bold;
+            text-shadow: 0 0 10px var(--fire-orange);
+        }
+
+        .story-text {
+            line-height: 2.2;
+            font-size: 1.1rem;
+            text-align: left;
+            margin-bottom: 40px;
+            color: #f0f0f0;
+        }
+
+        .mei-quote {
+            color: var(--heat-yellow);
+            font-style: italic;
+            text-align: center;
+            font-size: 1.3rem;
+            margin: 30px 0;
+            text-shadow: 0 0 8px rgba(255, 204, 0, 0.6);
+        }
+
+        .btn-restart {
+            background: var(--fire-orange);
+            color: #000;
+            border: none;
+            padding: 12px 40px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 0 20px rgba(255, 69, 0, 0.4);
+        }
+
+        .btn-restart:hover {
+            background: var(--heat-yellow);
+            transform: scale(1.05);
+        }
+
+        .ending-title {
+            color: #555;
+            font-size: 0.7rem;
+            margin-top: 40px;
+            letter-spacing: 3px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="reentry-fire"></div>
+    <div class="sparks"></div>
+
+    <div class="container">
+        <div class="status-msg">!! SYSTEM TIMEOUT !!</div>
+        
+        <div class="story-text">
+            決断の時は過ぎた。<br><br>
+            メイの指が静かに最後のキーを叩く。心中プログラムが牙を剥き、船の制御は完全に失われた。
+            エクリプス号の機体は、まるで重力に吸い寄せられるかのように、地球の大気圏へと落下を始める。<br><br>
+
+            <div class="mei-quote">
+                「……見て。綺麗よ。私たちは、ようやく星に帰れるの」
+            </div>
+
+            窓の外では、摩擦熱で船体が真っ赤に溶け始めている。<br>
+            犯人も、密輸者も、アルコール中毒者も。
+            すべての罪を飲み込んで、エクリプス号は一筋の流星となって燃え尽きた。
+        </div>
+
+        <div style="margin-top: 50px;">
+            <a href="index.html" class="btn-restart">REBOOT SYSTEM</a>
+            <div class="ending-title">-- ENDING: DRIFT (星屑への回帰) --</div>
+        </div>
+    </div>
+
+</body>
+</html>
