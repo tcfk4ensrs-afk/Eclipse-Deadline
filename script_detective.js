@@ -1,3 +1,8 @@
+/**
+ * PROJECT: ECLIPSE DEADLINE - Phase 02: Interrogation
+ * 尋問フェーズ：対話、証拠提示、及び真実の解明
+ */
+
 class Game {
     constructor() {
         this.characterFiles = {
@@ -16,17 +21,23 @@ class Game {
         this.currentCharacterId = null;
         this.isAiThinking = false;
         
-        // 状態管理
+        // 第1フェーズからの引き継ぎデータ
+        // 形式: [{name: "アイテム名", detail: "説明文"}, ...]
         this.state = {
             evidences: JSON.parse(localStorage.getItem('securedEvidence')) || [],
             affinity: JSON.parse(localStorage.getItem('introAffinity')) || {},
-            // キャラクターごとに配列を持つように初期化
             history: {
-                engineer: [],
-                captain: [],
-                pilot: [],
-                observer: []
+                engineer: [], captain: [], pilot: [], observer: []
             }
+        };
+
+        // 真実データ（MASTER_DATAのlocationsと同じ内容を定義）
+        this.truthReference = {
+            "医師の遺体": "後頭部に鈍器の痕があり、内部から無理やりロックされている。ノアによる犯行の決定的証拠。",
+            "削除されたログの断片": "削除されたログの復元に成功。14:15にポッドへ入る『2つの人影（ノアと医師）』が記録されていた。",
+            "空の食料袋": "リクが隠したはずの物資は、ノアによって全て宇宙へ投棄されていた。生存競争の引き金。",
+            "ラベルのない液体瓶": "バイオ燃料装置を改造して密造された高純度エタノール。ハリス船長の重度の依存症を示す。",
+            "不整合なエネルギーログ": "12:30に倉庫の全物資を『燃料パージ』として強制投棄した確定ログ。ノアの計画の一部。"
         };
     }
 
@@ -76,9 +87,6 @@ class Game {
         });
     }
 
-    /**
-     * 尋問画面を開く（ここでログを切り替える）
-     */
     openInterrogation(id) {
         this.currentCharacterId = id;
         const char = this.characters.find(c => c.id === id);
@@ -86,7 +94,6 @@ class Game {
         document.getElementById('main-menu').style.display = 'none';
         document.getElementById('interrogation-room').style.display = 'flex';
         
-        // ヘッダー更新
         const targetNameElem = document.getElementById('target-name');
         const imgSrc = this.charImages[id] || "assets/default.jpg";
         targetNameElem.innerHTML = `
@@ -96,14 +103,12 @@ class Game {
             </div>
         `;
 
-        // 【重要】そのキャラ専用のログを再描画する
         this.refreshChatLog();
     }
 
     refreshChatLog() {
         const logContainer = document.getElementById('chat-log');
-        logContainer.innerHTML = ''; // 一旦空にする
-        
+        logContainer.innerHTML = ''; 
         const history = this.state.history[this.currentCharacterId] || [];
         history.forEach(msg => {
             this.renderSingleMessage(msg.role, msg.displayOuter, msg.displayInner);
@@ -116,16 +121,18 @@ class Game {
         if (!text || this.isAiThinking) return;
 
         this.isAiThinking = true;
-        this.appendMessage('user', text); // 自分の発言を保存・表示
+        this.appendMessage('user', text);
         input.value = '';
 
         try {
             const char = this.characters.find(c => c.id === this.currentCharacterId);
-            // 今話しているキャラの履歴だけをAIに送る
             const history = this.state.history[this.currentCharacterId] || [];
             
             const responseText = await window.sendToAI(this.constructPrompt(char), text, history);
-            this.appendMessage('model', responseText); // AIの発言を保存・表示
+            this.appendMessage('model', responseText);
+            
+            // AIの回答後に証拠のアップデートチェック
+            this.checkTruthUpdate(responseText);
         } catch (e) {
             this.appendMessage('system', "ERROR: " + e.message);
         } finally {
@@ -133,9 +140,52 @@ class Game {
         }
     }
 
+    /**
+     * 証拠の「突きつけ」
+     */
+    presentEvidence(evidenceName) {
+        if (this.isAiThinking || !this.currentCharacterId) return;
+        const input = document.getElementById('chat-input');
+        input.value = `【証拠提示：${evidenceName}】これについて説明してください。`;
+        this.sendMessage();
+    }
+
+    /**
+     * AIのセリフを解析して、証拠を「真実」に上書きする
+     */
+    checkTruthUpdate(aiText) {
+        // AIが秘密を認めたり、自白に近い反応をした場合のキーワード判定
+        const updateTriggers = [
+            { key: "医師の遺体", triggers: ["殺しました", "遺体です", "ハッチの中"] },
+            { key: "ラベルのない液体瓶", triggers: ["私の酒だ", "アルコール", "飲んでいた"] },
+            { key: "不自然に軽いコンテナ", triggers: ["捨てた", "パージ", "廃棄"] },
+            { key: "削除されたログの断片", triggers: ["消しました", "見られた", "ログ"] }
+        ];
+
+        updateTriggers.forEach(item => {
+            if (item.triggers.some(t => aiText.includes(t))) {
+                this.updateEvidenceToTruth(item.key);
+            }
+        });
+    }
+
+    updateEvidenceToTruth(name) {
+        const index = this.state.evidences.findIndex(e => e.name === name || e.item === name);
+        if (index !== -1 && this.truthReference[name]) {
+            const currentDetail = this.state.evidences[index].detail;
+            const newTruth = this.truthReference[name];
+            
+            if (!currentDetail.includes("【確定】")) {
+                this.state.evidences[index].detail = `【確定】${newTruth}`;
+                localStorage.setItem('securedEvidence', JSON.stringify(this.state.evidences));
+                this.updateEvidenceUI();
+                this.appendMessage('system', `証拠更新: 「${name}」の真相が判明しました。`);
+            }
+        }
+    }
+
     appendMessage(role, text) {
         let displayOuter = text, displayInner = "";
-
         if (role === 'model') {
             const outerMatch = text.match(/outer_voice[:：]\s*([\s\S]*?)(?=inner_voice|$)/i);
             const innerMatch = text.match(/inner_voice[:：]\s*([\s\S]*)/i);
@@ -143,14 +193,9 @@ class Game {
             displayInner = innerMatch ? innerMatch[1].trim() : "";
         }
 
-        // 現在のキャラクターの履歴に追加
         this.state.history[this.currentCharacterId].push({ 
-            role, 
-            text, 
-            displayOuter, 
-            displayInner 
+            role, text, displayOuter, displayInner 
         });
-
         this.renderSingleMessage(role, displayOuter, displayInner);
     }
 
@@ -165,45 +210,39 @@ class Game {
         log.scrollTop = log.scrollHeight;
     }
 
-    /**
-     * プロンプトに「質問し返せ」という命令を追加
-     */
     constructPrompt(char) {
         const userAffinity = this.state.affinity[char.id] || "neutral";
+        const evidenceString = this.state.evidences.map(e => `${e.name}(内容:${e.detail})`).join(', ');
+
         return `
 # Role
-あなたはSFミステリーの登場人物「${char.name}」です。
-# Profile
-- 役割: ${char.role}
-- 性格: ${char.personality} / 口調: ${char.style}
-- 秘密: ${JSON.stringify(char.secrets || char.secret_sin)}
-- 嘘をつく条件: ${char.behavior_logic?.lie_condition || "常に保身を優先せよ"}
+あなたは「${char.name}」です。性格:${char.personality}。
 # Context
-- 管制官(プレイヤー)の態度: ${userAffinity}
-- 提示された証拠: ${this.state.evidences.join(', ')}
+- 現在の証拠状況: ${evidenceString}
+- プレイヤーの態度への印象: ${userAffinity}
+- 秘密: ${JSON.stringify(char.secrets || char.secret_sin)}
 
-# 重要ルール：逆質問と揺さぶり
-1. あなたはただ質問に答えるだけの機械ではありません。
-2. 自分が疑われたら、「${char.name}を疑うなんてどうかしている」「他の奴らの方が怪しい」と反論してください。
-3. **会話の終わりに、必ず管制官(プレイヤー)に対して、疑いを逸らすための質問や、他のクルーを疑わせるような揺さぶりの質問を投げかけてください。**
-4. 例: 「私を疑う前に、あの操縦士の隠し事について調べたらどうだ？」「君は本当に地上の人間なのか？」
-
-# Response Format
-outer_voice: [発言]
-inner_voice: [内心]
+# 重要ルール
+1. プレイヤーから【証拠提示：XXX】があった場合、その証拠の内容（確定か曖昧か）を見て反応してください。
+2. 曖昧なうちはとぼけてください。確定（【確定】）した証拠を突きつけられたら、逃げられないと悟り、焦るか自白を始めてください。
+3. 会話の最後に必ずプレイヤーを揺さぶる質問をしてください。
+4. 返答は必ず outer_voice と inner_voice の形式を守ってください。
         `.trim();
     }
 
     updateEvidenceUI() {
         const list = document.getElementById('evidence-list');
         if (!list) return;
-        list.innerHTML = this.state.evidences.map(ev => 
-            `<div class="evidence-item">● ${ev}</div>`
-        ).join('') || '<p style="color:#555">NO DATA SECURED</p>';
+        list.innerHTML = this.state.evidences.map(ev => `
+            <div class="evidence-item" onclick="game.presentEvidence('${ev.name}')" style="cursor:pointer;">
+                <strong>● ${ev.name}</strong>
+                <p>${ev.detail}</p>
+                <small style="color:var(--neon-green); font-size:0.7em;">>> 突きつける</small>
+            </div>
+        `).join('') || '<p style="color:#555">NO DATA SECURED</p>';
     }
 }
 
-// 起動処理
 const game = new Game();
 window.game = game;
 document.addEventListener('DOMContentLoaded', () => {
