@@ -280,8 +280,21 @@ ${specialInstruction}
     }
 }
 
+// グローバルに関数を定義
 const game = new Game();
 window.game = game;
+
+window.saveApiKey = function() {
+    const input = document.getElementById('api-key-input');
+    if (input && input.value.trim() !== "") {
+        sessionStorage.setItem('GEMINI_API_KEY', input.value.trim());
+        alert("APIキーを保存しました。");
+        location.reload();
+    } else {
+        alert("キーを入力してください。");
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     game.init();
     document.getElementById('send-btn').onclick = () => game.sendMessage();
