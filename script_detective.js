@@ -130,7 +130,6 @@ class Game {
             const responseText = await window.sendToAI(this.constructPrompt(char), text, history);
             this.appendMessage('model', responseText);
             
-            // AIの回答後に証拠のアップデートチェック
             this.checkTruthUpdate(responseText);
         } catch (e) {
             this.appendMessage('system', "ERROR: " + e.message);
@@ -146,9 +145,6 @@ class Game {
         this.sendMessage();
     }
 
-    /**
-     * AIのセリフを解析して、他人の証言に基づいて証拠を「真実」に上書きする
-     */
     checkTruthUpdate(aiText) {
         const currentId = this.currentCharacterId;
 
@@ -181,7 +177,6 @@ class Game {
         ];
 
         revelationTriggers.forEach(item => {
-            // 今話している相手が、正しい情報提供者であり、かつキーワードが含まれている場合
             if (currentId === item.informant && item.triggers.some(t => aiText.includes(t))) {
                 this.updateEvidenceToTruth(item.key);
             }
@@ -237,12 +232,16 @@ class Game {
 
         let specialInstruction = "";
         
-        // 会話回数に応じた動的指示
+        // 会話回数に応じた動的指示と伏線（有機質量2ユニットの示唆）
         if (talkCount >= 5 && talkCount < 10) {
-            specialInstruction = "\n- 【状況変化】あなたとプレイヤーの会話は5回を超えました。少し緊張が解けたか、あるいは隠しきれない不安から、他人の行動に関する『些細な違和感』を会話の端々に混ぜてください。";
+            specialInstruction = `
+- 【状況変化】あなたとプレイヤーの会話は5回を超えました。少し緊張が解けたか、あるいは隠しきれない不安から、他人の行動に関する『些細な違和感』を会話の端々に混ぜてください。
+- 【重要伏線】あなたの役割に基づき、「船の再起動には2ユニット（二人分）の新鮮な有機質量が必要である」という絶望的な事実を、技術的懸念やデータの違和感として小出しにしてください。`;
         }
         if (talkCount >= 10) {
-            specialInstruction = "\n- 【状況変化】会話は10回を超え、あなたはかなり疲弊、あるいは饒舌になっています。他人の秘密に直結する『具体的な矛盾』を、愚痴や不安を装ってやんわりと話し始めてください。";
+            specialInstruction = `
+- 【状況変化】会話は10回を超え、あなたはかなり疲弊、あるいは饒舌になっています。他人の秘密に直結する『具体的な矛盾』を、愚痴や不安を装ってやんわりと話し始めてください。
+- 【解決策の提示】「誰か二人を犠牲にする（バイオ・リサイクル・モード）」ことで地球へ帰れるという残酷な結論を、あなたの性格に合わせて（ノアなら冷酷な計算として、メイなら救済の手段として）示唆してください。`;
         }
 
         return `
