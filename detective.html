@@ -5,6 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GCC Terminal - Interrogation Phase</title>
     <link rel="stylesheet" href="style_detective.css">
+    <style>
+        /* 告発ボタンを目立たせる追加スタイル */
+        .danger-btn {
+            background: #4a0000;
+            color: #ff3333;
+            border: 1px solid #ff3333;
+            padding: 12px;
+            width: 100%;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+        .danger-btn:hover {
+            background: #ff3333;
+            color: #000;
+            box-shadow: 0 0 15px #ff3333;
+        }
+    </style>
 </head>
 <body>
     <div id="api-modal" class="modal">
@@ -21,11 +40,11 @@
     <div class="game-container">
         <div class="panel side-panel">
             <h3>SECURED EVIDENCE</h3>
-            <div id="evidence-list">
-                </div>
+            <div id="evidence-list"></div>
+            
             <div class="status-box">
                 <p>STATUS: ANALYZING</p>
-                <button id="accuse-btn" class="danger-btn" onclick="game.startAccusation()">👉 真犯人を告発する</button>
+                <button id="accuse-btn" class="danger-btn" onclick="goToAccusation()">👉 真犯人を告発する</button>
             </div>
         </div>
 
@@ -57,5 +76,20 @@
         window.sendToAI = sendToAI;
     </script>
     <script src="script_detective.js"></script>
+
+    <script>
+        function goToAccusation() {
+            // プレイヤーへの最終確認
+            const msg = "【最終警告】\nこれより告発・隔離プロトコルに移行します。\n尋問フェーズには戻れません。よろしいですか？";
+            if (confirm(msg)) {
+                // 画面を暗くする演出などを挟んで遷移
+                document.body.style.opacity = "0";
+                document.body.style.transition = "opacity 1s";
+                setTimeout(() => {
+                    window.location.href = "accusation.html";
+                }, 1000);
+            }
+        }
+    </script>
 </body>
 </html>
