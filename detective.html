@@ -6,91 +6,93 @@
     <title>GCC Terminal - Interrogation Phase</title>
     <link rel="stylesheet" href="style_detective.css">
     <style>
-        /* 告発ボタンを目立たせる追加スタイル */
-        .danger-btn {
-            background: #4a0000;
-            color: #ff3333;
-            border: 1px solid #ff3333;
-            padding: 12px;
-            width: 100%;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-            margin-top: 10px;
-        }
-        .danger-btn:hover {
-            background: #ff3333;
-            color: #000;
-            box-shadow: 0 0 15px #ff3333;
-        }
+        /* --- 基本レスポンシブ設定 --- */
+        body { margin: 0; padding: 0; overflow-x: hidden; }
 
-        /* 🟢 船内マップエリアの追加スタイル */
-        .map-panel {
-            margin-top: 20px;
-            border: 1px solid #00ff41;
-            background: rgba(0, 5, 0, 0.9);
+        .game-container {
+            display: grid;
+            grid-template-columns: 320px 1fr; /* PC用：左にパネル、右にメイン */
+            gap: 15px;
+            width: 100vw;
+            height: 100vh;
             padding: 10px;
-            box-shadow: inset 0 0 10px rgba(0, 255, 65, 0.2);
+            box-sizing: border-box;
         }
 
-        .map-panel h4 {
-            font-size: 0.7rem;
-            color: #00ff41;
-            margin: 0 0 8px 0;
-            letter-spacing: 1px;
-            text-align: center;
-            border-bottom: 1px solid rgba(0, 255, 65, 0.3);
-            padding-bottom: 4px;
+        /* スマホ用レイアウト（画面幅が短い時） */
+        @media (max-width: 850px) {
+            .game-container {
+                display: flex;
+                flex-direction: column;
+                height: auto;
+                overflow-y: auto;
+            }
+            .side-panel { order: 2; width: 100%; }
+            .main-panel { order: 1; height: 70vh; min-height: 400px; }
         }
 
-        .map-container {
-            width: 100%;
-            overflow: hidden;
-            border: 1px solid #333;
-            cursor: zoom-in;
+        /* --- 地図モーダル演出 --- */
+        #map-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            cursor: zoom-out;
+        }
+
+        #map-overlay img {
+            max-width: 95%;
+            max-height: 95%;
+            border: 2px solid #00ff41;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.5);
+        }
+
+        /* --- 地図パネルの装飾 --- */
+        .map-panel {
+            margin-top: 15px;
+            border: 1px solid #00ff41;
+            padding: 8px;
+            background: rgba(0, 10, 0, 0.8);
         }
 
         .map-container img {
             width: 100%;
-            height: auto;
-            display: block;
-            /* 🟢 尋問フェーズは少し緊迫感を出すためセピア/グリーンのフィルターを適用 */
-            filter: sepia(1) hue-rotate(90deg) brightness(0.8) contrast(1.2);
+            cursor: zoom-in;
+            filter: sepia(1) hue-rotate(90deg) brightness(0.8);
             transition: 0.3s;
         }
 
-        .map-container img:hover {
-            filter: none;
-            brightness: 1.1;
+        .map-container img:hover { filter: none; }
+
+        /* 告発ボタン */
+        .danger-btn {
+            background: #4a0000; color: #ff3333; border: 1px solid #ff3333;
+            padding: 12px; width: 100%; cursor: pointer; font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <div id="api-modal" class="modal">
-        <div class="modal-content">
-            <h3>SYSTEM: API KEY CONFIG</h3>
-            <p>Gemini APIキーを入力してください（テスト用）</p>
-            <input type="password" id="api-key-input" placeholder="AIzaSy...">
-            <div class="modal-btns">
-                <button onclick="saveApiKey()">SAVE & CONNECT</button>
-            </div>
-        </div>
+
+    <div id="map-overlay" onclick="closeMap()">
+        <img id="enlarged-map" src="" alt="Enlarged Map">
     </div>
 
     <div class="game-container">
         <div class="panel side-panel">
             <h3>SECURED EVIDENCE</h3>
-            <div id="evidence-list"></div>
+            <div id="evidence-list" style="flex-grow: 1; overflow-y: auto; max-height: 30vh;"></div>
 
             <div class="map-panel">
-                <h4>SHIP SCHEMATIC: MAP-01</h4>
+                <h4 style="font-size: 0.6rem; color: #00ff41; text-align: center; margin: 0 0 5px 0;">SCHEMATIC: MAP-01</h4>
                 <div class="map-container">
-                    <img src="assets/map1.jpg" alt="Ship Map 1" onclick="window.open(this.src)">
+                    <img src="assets/map1.jpg" alt="Ship Map 1" onclick="openMap(this.src)">
                 </div>
             </div>
             
             <div class="status-box">
-                <p>STATUS: ANALYZING</p>
                 <button id="accuse-btn" class="danger-btn" onclick="goToAccusation()">👉 真犯人を告発する</button>
             </div>
         </div>
@@ -98,45 +100,53 @@
         <div class="panel main-panel">
             <div id="main-menu">
                 <div class="header">
-                    <h2>INTERROGATION PROTOCOL</h2>
-                    <p>容疑者を選択して尋問を開始してください。</p>
+                    <h2>INTERROGATION</h2>
+                    <p style="font-size: 0.8rem;">対象を選択してください。</p>
                 </div>
                 <div id="character-list" class="char-grid"></div>
             </div>
 
-            <div id="interrogation-room" style="display: none;">
-                <div class="chat-header">
-                    <button id="back-btn">⬅ 戻る</button>
-                    <span id="target-name">TARGET NAME</span>
+            <div id="interrogation-room" style="display: none; height: 100%; flex-direction: column;">
+                <div class="chat-header" style="display: flex; align-items: center; gap: 10px; padding-bottom: 10px;">
+                    <button id="back-btn" style="background: none; color: #00ff41; border: 1px solid #00ff41;">⬅</button>
+                    <span id="target-name">TARGET</span>
                 </div>
-                <div id="chat-log"></div>
-                <div class="input-area">
-                    <input type="text" id="chat-input" placeholder="問い詰める内容を入力...">
-                    <button id="send-btn">SEND</button>
+                <div id="chat-log" style="flex-grow: 1; overflow-y: auto; border: 1px solid #222; padding: 10px; margin-bottom: 10px;"></div>
+                <div class="input-area" style="display: flex; gap: 5px;">
+                    <input type="text" id="chat-input" placeholder="問い詰める..." style="flex-grow: 1; background: #000; color: #fff; border: 1px solid #00ff41; padding: 10px;">
+                    <button id="send-btn" style="background: #00ff41; color: #000; border: none; padding: 0 20px; font-weight: bold;">SEND</button>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        // 🟢 画像拡大ロジック
+        function openMap(src) {
+            const overlay = document.getElementById('map-overlay');
+            const img = document.getElementById('enlarged-map');
+            img.src = src;
+            overlay.style.display = 'flex';
+        }
+
+        function closeMap() {
+            document.getElementById('map-overlay').style.display = 'none';
+        }
+
+        // 告発遷移
+        function goToAccusation() {
+            if (confirm("告発プロトコルへ移行しますか？")) {
+                document.body.style.opacity = "0";
+                document.body.style.transition = "opacity 1s";
+                setTimeout(() => { window.location.href = "accusation.html"; }, 1000);
+            }
+        }
+    </script>
 
     <script type="module">
         import { sendToAI } from './ai.js';
         window.sendToAI = sendToAI;
     </script>
     <script src="script_detective.js"></script>
-
-    <script>
-        function goToAccusation() {
-            // プレイヤーへの最終確認
-            const msg = "【最終警告】\nこれより告発・隔離プロトコルに移行します。\n尋問フェーズには戻れません。よろしいですか？";
-            if (confirm(msg)) {
-                // 画面を暗くする演出などを挟んで遷移
-                document.body.style.opacity = "0";
-                document.body.style.transition = "opacity 1s";
-                setTimeout(() => {
-                    window.location.href = "accusation.html";
-                }, 1000);
-            }
-        }
-    </script>
 </body>
 </html>
