@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STARVATION END - ECLIPSE DEADLINE</title>
+    <style>
+        :root {
+            --warning-amber: #ffb300;
+            --deep-space: #0a0800;
+            --text-gray: #888;
+        }
+
+        body {
+            background-color: var(--deep-space);
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 停滞した宇宙の背景 */
+        .stars {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(white, rgba(255,255,255,0) 2px) 0 0 / 100px 100px;
+            opacity: 0.05;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 800px;
+            padding: 40px;
+            text-align: center;
+            border: 1px solid var(--warning-amber);
+            background: rgba(10, 8, 0, 0.9);
+            box-shadow: 0 0 30px rgba(255, 179, 0, 0.1);
+            animation: flicker 4s infinite;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .status-msg {
+            color: var(--warning-amber);
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+            border-bottom: 1px solid var(--warning-amber);
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+
+        .story-text {
+            line-height: 1.8;
+            font-size: 1.1rem;
+            text-align: left;
+            margin-bottom: 40px;
+            color: #d0d0d0;
+        }
+
+        .failure-log {
+            margin-top: 30px;
+            padding: 15px;
+            background: rgba(255, 179, 0, 0.05);
+            border-left: 4px solid var(--warning-amber);
+            font-size: 0.9rem;
+            text-align: left;
+            color: var(--warning-amber);
+        }
+
+        .btn-restart {
+            background: transparent;
+            color: var(--warning-amber);
+            border: 1px solid var(--warning-amber);
+            padding: 10px 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+        }
+
+        .btn-restart:hover {
+            background: var(--warning-amber);
+            color: #000;
+        }
+
+        .low-power {
+            color: var(--warning-amber);
+            font-weight: bold;
+            text-shadow: 0 0 5px var(--warning-amber);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stars"></div>
+
+    <div class="container">
+        <div class="status-msg">[TERMINAL LOG: RE-IGNITION FAILED (LOW CALORIE)]</div>
+        
+        <div class="story-text">
+            ノアをリアクターへ放り込み、もう一つのスロットには「柱」を詰め込んだ。<br><br>
+            エンジンは一瞬、力強い咆哮を上げたが……すぐに頼りない低音へと変わる。木材と人間一人分では、地球へ届くための熱量には到底足りなかった。<br><br>
+            船は加速しきれず、暗黒の虚空をゆっくりと漂い始める。<br><br>
+            <span class="low-power">「……計算ミスね。食料が尽きるのが先か、酸素が尽きるのが先か……」</span><br><br>
+            メイの自嘲気味な笑いが響く。リクは消えた家族への金を叫び、ハリスは空になった酒瓶を抱えて泣いている。
+            地球の青い光を遠くに眺めながら、あなたたちは緩やかな死を待つことになる。
+        </div>
+
+        <div class="failure-log">
+            <strong>ERROR CODE: 0x00E1-STARV</strong><br>
+            - 生体エネルギー不足を検知。<br>
+            - 予定軌道への投入に失敗。<br>
+            - 救助到着確率: 0.0004%
+        </div>
+
+        <div style="margin-top: 50px;">
+            <p style="color: var(--text-gray); font-size: 0.8rem;">-- ENDING: STARVATION (等価交換の失敗) --</p>
+            <a href="index.html" class="btn-restart">RETRY FROM TITLE</a>
+        </div>
+    </div>
+
+</body>
+</html>
