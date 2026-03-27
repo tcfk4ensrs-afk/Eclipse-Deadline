@@ -16,14 +16,26 @@
         }
 
         .highlight-red { color: #ff0000; font-weight: bold; }
+        .highlight-green { color: #00ff41; font-weight: bold; }
 
         .intro-section {
             background: rgba(0, 255, 65, 0.05);
             border-left: 2px solid #00ff41;
-            padding: 20px;
+            padding: 25px;
             margin: 30px 0;
             line-height: 1.8;
             font-size: 0.95em;
+            border-right: 1px solid rgba(0, 255, 65, 0.2);
+            box-shadow: inset 0 0 20px rgba(0, 255, 65, 0.05);
+        }
+
+        .intro-section h3 {
+            margin-top: 0;
+            color: #00ff41;
+            font-size: 1.1em;
+            border-bottom: 1px solid var(--dim-green);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
         }
 
         .mission-call {
@@ -31,6 +43,20 @@
             font-style: italic;
             margin: 20px 0;
             color: #00ff41;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+        }
+
+        /* 警告アニメーション */
+        .alert-text {
+            color: #ff4444;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
     </style>
 </head>
@@ -42,17 +68,22 @@
         </header>
 
         <div class="catchphrase">
-            「救えるのは、<span style="color:#00ff41">4人</span>。殺すのは、<span class="highlight-red">2人</span>。」
+            「救えるのは、<span class="highlight-green">4人</span>。殺すのは、<span class="highlight-red">2人</span>。」
         </div>
 
         <section class="intro-section">
-            <p>西暦20XX年。深宇宙探査船「エクリプス号」は、異星で発見された未知のエネルギー資源の座標データを携え、地球への帰還途上にあった。</p>
-            <p>平穏な航行は、突如として鳴り響いた<span class="highlight-red">「酸素漏れアラート」</span>によって破られる。</p>
-            <p>パニックに陥る乗組員たち。閉鎖されたブリッジ。そして、姿を消した船医――。</p>
+            <h3>【GCC（地球地上管制センター）より入電】</h3>
+            <p>深宇宙探査船「エクリプス号」主任管制官、応答せよ。</p>
+            <p>現在、エクリプス号は異星で発見された<span class="highlight-green">**「超高密度エネルギー」**</span>の極秘座標データを格納し、地球への帰還路についている。</p>
+            <p>地球到着まで、残り1日。このデータは人類の未来を左右する至宝であり、何としても持ち帰らねばならない。</p>
+            <p>しかし、看過できない事態が発生した。出発後の再調査により、<span class="highlight-red">乗組員の中に他国のスパイが1名紛れ込んでいる</span>という確実な情報が、先ほど本部の諜報部より寄せられた。</p>
+            <p>スパイの目的はデータの強奪、あるいは船の破壊だ。……この事実は、まだ船内の乗組員たちには伏せられている。</p>
+            <p>あなたは地上から、彼らのバイタル、行動ログ、そして通信を24時間監視し、平穏を装いながらスパイを特定・排除しなければならない。</p>
+            <p>だが、1日間の静寂を待たずして、エクリプス号の深部から<span class="alert-text">致命的な酸素異常アラート</span>が鳴り響いた。</p>
         </section>
 
         <div class="mission-call">
-            ――地球まで45,000km。通信越しに、あなたは「命の選別」を命じられる。
+            ――暗黒の宇宙で、孤独な心理戦が今、幕を開ける。
         </div>
 
         <section class="character-intro">
