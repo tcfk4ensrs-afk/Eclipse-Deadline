@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TERMINATED - ECLIPSE DEADLINE</title>
+    <style>
+        :root {
+            --error-red: #ff0000;
+            --dark-red: #4a0000;
+            --void-black: #050000;
+        }
+
+        body {
+            background-color: var(--void-black);
+            color: var(--error-red);
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            text-transform: uppercase;
+        }
+
+        /* 画面のノイズ演出 */
+        .noise {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .container {
+            max-width: 600px;
+            padding: 30px;
+            border: 2px solid var(--error-red);
+            background: rgba(20, 0, 0, 0.9);
+            box-shadow: 0 0 50px var(--dark-red);
+            text-align: center;
+            animation: glitch 0.2s infinite;
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin: 0;
+            letter-spacing: 10px;
+            text-shadow: 2px 2px var(--dark-red);
+        }
+
+        .error-code {
+            background: var(--error-red);
+            color: #000;
+            padding: 5px 10px;
+            font-weight: bold;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        .message {
+            margin: 30px 0;
+            line-height: 1.6;
+            text-align: left;
+            border-left: 3px solid var(--error-red);
+            padding-left: 15px;
+        }
+
+        .btn-retry {
+            background: transparent;
+            color: var(--error-red);
+            border: 1px solid var(--error-red);
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.3s;
+            display: inline-block;
+            margin-top: 20px;
+        }
+
+        .btn-retry:hover {
+            background: var(--error-red);
+            color: #000;
+            box-shadow: 0 0 20px var(--error-red);
+        }
+
+        .footer-note {
+            margin-top: 40px;
+            font-size: 0.7rem;
+            color: var(--dark-red);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="noise"></div>
+
+    <div class="container">
+        <h1>TERMINATED</h1>
+        <div class="error-code">ERROR: MISSION_FAILURE_TIMEOUT</div>
+        
+        <div class="message">
+            >> 警告：規定ターン数内に十分な証拠を確保できませんでした。<br>
+            >> 船内AI「GCC」は論理的解決が不可能と判断。<br>
+            >> システムを強制シャットダウンし、全セクターを永久閉鎖します。<br><br>
+            真実は闇に消え、エクリプス号は静かに沈黙した。
+        </div>
+
+        <a href="index.html" class="btn-retry">REBOOT SYSTEM</a>
+
+        <div class="footer-note">
+            ACCESS DENIED. ALL LOGS DELETED.
+        </div>
+    </div>
+
+    <script>
+        // 画面表示時にビープ音のような演出をイメージ（視覚的）
+        console.error("MISSION FAILED: System logic loop detected.");
+    </script>
+</body>
+</html>
