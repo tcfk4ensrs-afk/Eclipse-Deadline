@@ -22,7 +22,6 @@ class Game {
         this.isAiThinking = false;
         
         // 第1フェーズからの引き継ぎデータ
-        // 形式: [{name: "アイテム名", detail: "説明文"}, ...]
         this.state = {
             evidences: JSON.parse(localStorage.getItem('securedEvidence')) || [],
             affinity: JSON.parse(localStorage.getItem('introAffinity')) || {},
@@ -31,13 +30,13 @@ class Game {
             }
         };
 
-        // 真実データ（MASTER_DATAのlocationsと同じ内容を定義）
+        // 真実データ（特定の証言を得た際に上書きされる内容）
         this.truthReference = {
             "医師の遺体": "後頭部に鈍器の痕があり、内部から無理やりロックされている。ノアによる犯行の決定的証拠。",
-            "削除されたログの断片": "削除されたログの復元に成功。14:15にポッドへ入る『2つの人影（ノアと医師）』が記録されていた。",
-            "空の食料袋": "リクが隠したはずの物資は、ノアによって全て宇宙へ投棄されていた。生存競争の引き金。",
+            "ノイズ混じりの記録データ": "削除されたログの復元に成功。14:15にポッドへ入る『2つの人影（ノアと医師）』が記録されていた。",
+            "不自然に軽いコンテナ": "リクが隠したはずの物資は、ノアによって全て宇宙へ投棄されていた。生存競争の引き金。",
             "ラベルのない液体瓶": "バイオ燃料装置を改造して密造された高純度エタノール。ハリス船長の重度の依存症を示す。",
-            "不整合なエネルギーログ": "12:30に倉庫の全物資を『燃料パージ』として強制投棄した確定ログ。ノアの計画の一部。"
+            "コンテナ奥の断線したコード": "リクが12:30に意図的に切断したもの。倉庫の監視を無効化するための工作だった。"
         };
     }
 
@@ -140,9 +139,6 @@ class Game {
         }
     }
 
-    /**
-     * 証拠の「突きつけ」
-     */
     presentEvidence(evidenceName) {
         if (this.isAiThinking || !this.currentCharacterId) return;
         const input = document.getElementById('chat-input');
@@ -151,45 +147,49 @@ class Game {
     }
 
     /**
-     * AIのセリフを解析して、証拠を「真実」に上書きする
+     * AIのセリフを解析して、他人の証言に基づいて証拠を「真実」に上書きする
      */
-    const revelationTriggers = [
-    { 
-        key: "ラベルのない液体瓶", 
-        informant: "pilot", // リクが匂いでバラす
-        triggers: ["酒の匂い", "アルコール", "飲んでやがった"] 
-    },
-    { 
-        key: "不自然に軽いコンテナ", 
-        informant: "captain", // ハリスが記憶との相違を指摘
-        triggers: ["昨日は重かった", "備蓄されていたはず", "中身が空"] 
-    },
-    { 
-        key: "コンテナ奥の断線したコード", 
-        informant: "observer", // メイがリクの所在と時間をリンクさせる
-        triggers: ["リクが倉庫に入った瞬間", "通信が断絶", "物理的な切断"] 
-    },
-    { 
-        key: "ノイズ混じりの記録データ", 
-        informant: "engineer", // ノアがメイに罪をなすりつけるためにバラす
-        triggers: ["メイがログに触っていた", "彼女なら消せる", "ハッキングの形跡"] 
-    },
-    {
-        key: "医師の遺体",
-        informant: "observer", // 最後にメイがノアを売る
-        triggers: ["ノアがポッドへ", "二人の反応", "ハッチを閉めた"]
-    }
-];
+    checkTruthUpdate(aiText) {
+        const currentId = this.currentCharacterId;
 
-        updateTriggers.forEach(item => {
-            if (item.triggers.some(t => aiText.includes(t))) {
+        const revelationTriggers = [
+            { 
+                key: "ラベルのない液体瓶", 
+                informant: "pilot", 
+                triggers: ["酒の匂い", "アルコール", "飲んでやがった"] 
+            },
+            { 
+                key: "不自然に軽いコンテナ", 
+                informant: "captain", 
+                triggers: ["昨日は重かった", "備蓄されていたはず", "中身が空"] 
+            },
+            { 
+                key: "コンテナ奥の断線したコード", 
+                informant: "observer", 
+                triggers: ["リクが倉庫に入った瞬間", "通信が断絶", "物理的な切断"] 
+            },
+            { 
+                key: "ノイズ混じりの記録データ", 
+                informant: "engineer", 
+                triggers: ["メイがログに触っていた", "彼女なら消せる", "ハッキングの形跡"] 
+            },
+            {
+                key: "医師の遺体",
+                informant: "observer", 
+                triggers: ["ノアがポッドへ", "二人の反応", "ハッチを閉めた"]
+            }
+        ];
+
+        revelationTriggers.forEach(item => {
+            // 今話している相手が、正しい情報提供者であり、かつキーワードが含まれている場合
+            if (currentId === item.informant && item.triggers.some(t => aiText.includes(t))) {
                 this.updateEvidenceToTruth(item.key);
             }
         });
     }
 
     updateEvidenceToTruth(name) {
-        const index = this.state.evidences.findIndex(e => e.name === name || e.item === name);
+        const index = this.state.evidences.findIndex(e => e.name === name);
         if (index !== -1 && this.truthReference[name]) {
             const currentDetail = this.state.evidences[index].detail;
             const newTruth = this.truthReference[name];
@@ -230,8 +230,20 @@ class Game {
     }
 
     constructPrompt(char) {
+        const history = this.state.history[char.id] || [];
+        const talkCount = history.filter(h => h.role === 'model').length; 
         const userAffinity = this.state.affinity[char.id] || "neutral";
         const evidenceString = this.state.evidences.map(e => `${e.name}(内容:${e.detail})`).join(', ');
+
+        let specialInstruction = "";
+        
+        // 会話回数に応じた動的指示
+        if (talkCount >= 5 && talkCount < 10) {
+            specialInstruction = "\n- 【状況変化】あなたとプレイヤーの会話は5回を超えました。少し緊張が解けたか、あるいは隠しきれない不安から、他人の行動に関する『些細な違和感』を会話の端々に混ぜてください。";
+        }
+        if (talkCount >= 10) {
+            specialInstruction = "\n- 【状況変化】会話は10回を超え、あなたはかなり疲弊、あるいは饒舌になっています。他人の秘密に直結する『具体的な矛盾』を、愚痴や不安を装ってやんわりと話し始めてください。";
+        }
 
         return `
 # Role
@@ -243,9 +255,11 @@ class Game {
 
 # 重要ルール
 1. プレイヤーから【証拠提示：XXX】があった場合、その証拠の内容（確定か曖昧か）を見て反応してください。
-2. 曖昧なうちはとぼけてください。確定（【確定】）した証拠を突きつけられたら、逃げられないと悟り、焦るか自白を始めてください。
-3. 会話の最後に必ずプレイヤーを揺さぶる質問をしてください。
-4. 返答は必ず outer_voice と inner_voice の形式を守ってください。
+2. 自分の秘密については曖昧なうちはとぼけてください。確定（【確定】）した証拠を突きつけられたら、自白を検討してください。
+3. 他人の秘密について: プレイヤーとの対話が進むにつれて、知っている他人の不審な点（場所や時間など）をポロッと漏らしてください。
+${specialInstruction}
+4. 会話の最後に必ずプレイヤーを揺さぶる質問をしてください。
+5. 返答は必ず outer_voice と inner_voice の形式を守ってください。
         `.trim();
     }
 
