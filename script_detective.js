@@ -153,14 +153,33 @@ class Game {
     /**
      * AIのセリフを解析して、証拠を「真実」に上書きする
      */
-    checkTruthUpdate(aiText) {
-        // AIが秘密を認めたり、自白に近い反応をした場合のキーワード判定
-        const updateTriggers = [
-            { key: "医師の遺体", triggers: ["殺しました", "遺体です", "ハッチの中"] },
-            { key: "ラベルのない液体瓶", triggers: ["私の酒だ", "アルコール", "飲んでいた"] },
-            { key: "不自然に軽いコンテナ", triggers: ["捨てた", "パージ", "廃棄"] },
-            { key: "削除されたログの断片", triggers: ["消しました", "見られた", "ログ"] }
-        ];
+    const revelationTriggers = [
+    { 
+        key: "ラベルのない液体瓶", 
+        informant: "pilot", // リクが匂いでバラす
+        triggers: ["酒の匂い", "アルコール", "飲んでやがった"] 
+    },
+    { 
+        key: "不自然に軽いコンテナ", 
+        informant: "captain", // ハリスが記憶との相違を指摘
+        triggers: ["昨日は重かった", "備蓄されていたはず", "中身が空"] 
+    },
+    { 
+        key: "コンテナ奥の断線したコード", 
+        informant: "observer", // メイがリクの所在と時間をリンクさせる
+        triggers: ["リクが倉庫に入った瞬間", "通信が断絶", "物理的な切断"] 
+    },
+    { 
+        key: "ノイズ混じりの記録データ", 
+        informant: "engineer", // ノアがメイに罪をなすりつけるためにバラす
+        triggers: ["メイがログに触っていた", "彼女なら消せる", "ハッキングの形跡"] 
+    },
+    {
+        key: "医師の遺体",
+        informant: "observer", // 最後にメイがノアを売る
+        triggers: ["ノアがポッドへ", "二人の反応", "ハッチを閉めた"]
+    }
+];
 
         updateTriggers.forEach(item => {
             if (item.triggers.some(t => aiText.includes(t))) {
