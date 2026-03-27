@@ -9,6 +9,7 @@
             --fire-orange: #ff4500;
             --heat-yellow: #ffcc00;
             --void-black: #000000;
+            --error-red: #ff0000; /* 狂気演出用の赤 */
         }
 
         body {
@@ -22,6 +23,7 @@
             justify-content: center;
             height: 100vh;
             overflow: hidden;
+            transition: filter 0.1s; /* グリッチ用のトランジション */
         }
 
         /* 燃える大気圏の背景演出 */
@@ -60,6 +62,8 @@
             background: rgba(0, 0, 0, 0.85);
             box-shadow: 0 0 50px rgba(255, 69, 0, 0.5);
             backdrop-filter: blur(5px);
+            position: relative;
+            transition: transform 0.1s;
         }
 
         .status-msg {
@@ -79,6 +83,7 @@
             color: #f0f0f0;
         }
 
+        /* メイの狂気の台詞 */
         .mei-quote {
             color: var(--heat-yellow);
             font-style: italic;
@@ -86,6 +91,22 @@
             font-size: 1.3rem;
             margin: 30px 0;
             text-shadow: 0 0 8px rgba(255, 204, 0, 0.6);
+            opacity: 0; /* 最初は非表示 */
+            animation: fadeInQuote 2s forwards 2s; /* 2秒後にフェードイン */
+        }
+
+        @keyframes fadeInQuote {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .laugh {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--error-red);
+            text-shadow: 0 0 10px var(--error-red);
+            display: block;
+            margin-top: 10px;
         }
 
         .btn-restart {
@@ -100,6 +121,12 @@
             text-decoration: none;
             display: inline-block;
             box-shadow: 0 0 20px rgba(255, 69, 0, 0.4);
+            opacity: 0;
+            animation: fadeInBtn 1s forwards 5s; /* 5秒後にフェードイン（笑い声の後） */
+        }
+
+        @keyframes fadeInBtn {
+            to { opacity: 1; }
         }
 
         .btn-restart:hover {
@@ -113,14 +140,43 @@
             margin-top: 40px;
             letter-spacing: 3px;
         }
+
+        /* 画面全体を赤く歪ませるグリッチエフェクト */
+        .insanity-flash {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 0, 0, 0.3);
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .crazy .insanity-flash {
+            animation: crazyFlash 0.3s ease-in-out 3 3s; /* 台詞の後に3回フラッシュ */
+        }
+
+        .crazy .container {
+            animation: crazyShake 0.3s ease-in-out 3 3s; /* コンテナを揺らす */
+        }
+
+        @keyframes crazyFlash {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; filter: hue-rotate(90deg) blur(2px); }
+        }
+
+        @keyframes crazyShake {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(5px, -5px) rotate(1deg); }
+            75% { transform: translate(-5px, 5px) rotate(-1deg); }
+        }
+
     </style>
 </head>
 <body>
 
     <div class="reentry-fire"></div>
     <div class="sparks"></div>
-
-    <div class="container">
+    <div class="insanity-flash"></div> <div class="container">
         <div class="status-msg">!! SYSTEM TIMEOUT !!</div>
         
         <div class="story-text">
@@ -130,10 +186,11 @@
 
             <div class="mei-quote">
                 「……見て。綺麗よ。私たちは、ようやく星に帰れるの」
+                <span class="laugh">……ふふ、あははははは！</span>
             </div>
 
             窓の外では、摩擦熱で船体が真っ赤に溶け始めている。<br>
-            犯人も、密輸者も、アルコール中毒者も。
+            犯人も、密輸者も、アルコール中毒者も、そしてあなたも。<br><br>
             すべての罪を飲み込んで、エクリプス号は一筋の流星となって燃え尽きた。
         </div>
 
@@ -142,6 +199,13 @@
             <div class="ending-title">-- ENDING: DRIFT (星屑への回帰) --</div>
         </div>
     </div>
+
+    <script>
+        // メイの台詞が出るタイミング（2秒後）でbodyにクラスを追加し、狂気演出を開始する
+        setTimeout(() => {
+            document.body.classList.add('crazy');
+        }, 1000); // 1秒後にクラス追加準備、CSSのアニメーションディレイと合わせて調整
+    </script>
 
 </body>
 </html>
