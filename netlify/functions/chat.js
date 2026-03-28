@@ -1,16 +1,7 @@
 // netlify/functions/chat.js
-
-// 🟢 修正：require('node-fetch') は削除します（標準のfetchを使用）
-
 exports.handler = async (event) => {
     const API_KEY = process.env.GEMINI_API_KEY;
-
-    if (!API_KEY) {
-        return { 
-            statusCode: 500, 
-            body: JSON.stringify({ error: "API Key not configured." }) 
-        };
-    }
+    if (!API_KEY) return { statusCode: 500, body: JSON.stringify({ error: "API Key Missing" }) };
 
     try {
         const { systemPrompt, userText, history } = JSON.parse(event.body);
@@ -27,7 +18,6 @@ exports.handler = async (event) => {
             ]
         };
 
-        // 🟢 標準のfetchを使用
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -36,15 +26,21 @@ exports.handler = async (event) => {
 
         const data = await response.json();
 
+        // 🟢 修正点：エラーレスポンスが返ってきた場合、そのまま詳細を返す
+        if (!response.ok) {
+            console.error("Gemini API Error:", data);
+            return {
+                statusCode: response.status,
+                body: JSON.stringify({ error: "Gemini API Error", details: data })
+            };
+        }
+
         return {
             statusCode: 200,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
         };
     } catch (error) {
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ error: error.message })
-        };
+        return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
 };
