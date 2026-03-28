@@ -62,51 +62,6 @@
             overflow-y: auto;
         }
 
-        /* --- API Config Area --- */
-        .api-config-area {
-            border: 1px solid #00ff41;
-            padding: 15px;
-            margin-bottom: 20px;
-            background: rgba(0, 255, 65, 0.05);
-            flex-shrink: 0; /* 潰れないように固定 */
-        }
-
-        .api-config-area h4 {
-            margin: 0 0 10px 0;
-            font-size: 0.7rem;
-            color: #00ff41;
-            letter-spacing: 1px;
-        }
-
-        .api-input-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        .api-input-group input {
-            flex-grow: 1;
-            background: #000;
-            color: #fff;
-            border: 1px solid #00ff41;
-            padding: 8px;
-            font-family: monospace;
-        }
-
-        .api-input-group button {
-            background: #00ff41;
-            color: #000;
-            border: none;
-            padding: 0 15px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .api-status-msg {
-            font-size: 0.65rem;
-            margin-top: 8px;
-            color: #ffff00;
-        }
-
         /* --- 地図モーダル演出 --- */
         #map-overlay {
             display: none;
@@ -142,16 +97,16 @@
             transition: 0.3s;
         }
 
-        /* --- 尋問ルームのレイアウト修正 --- */
+        /* --- 尋問ルームのレイアウト --- */
         #interrogation-room {
-            display: none; /* JSで flex に変更される */
+            display: none; 
             height: 100%;
             flex-direction: column;
-            overflow: hidden; /* 内部パーツの制御 */
+            overflow: hidden; 
         }
 
         .chat-header {
-            flex-shrink: 0; /* ヘッダーの高さは固定 */
+            flex-shrink: 0; 
             display: flex;
             align-items: center;
             gap: 10px;
@@ -159,10 +114,9 @@
             border-bottom: 1px solid rgba(0, 255, 65, 0.2);
         }
 
-        /* 🟢 重要：チャットログを可変にする */
         #chat-log {
-            flex-grow: 1; /* 余ったスペースをすべて埋める */
-            overflow-y: auto; /* ここだけスクロールを許可 */
+            flex-grow: 1; 
+            overflow-y: auto; 
             border: 1px solid #222;
             padding: 10px;
             margin-bottom: 10px;
@@ -172,7 +126,7 @@
         }
 
         .input-area {
-            flex-shrink: 0; /* 入力欄は絶対に潰さない */
+            flex-shrink: 0; 
             display: flex;
             gap: 5px;
             background: #000;
@@ -212,16 +166,7 @@
             <div id="main-menu">
                 <div class="header">
                     <h2>INTERROGATION PROTOCOL</h2>
-                    <p style="font-size: 0.8rem;">システム構成と容疑者の選択</p>
-                </div>
-
-                <div class="api-config-area">
-                    <h4>[SYSTEM CONFIG: GEMINI API]</h4>
-                    <div class="api-input-group">
-                        <input type="password" id="api-key-input" placeholder="AIzaSy...">
-                        <button onclick="saveApiKey()">SAVE</button>
-                    </div>
-                    <p id="api-status-msg" class="api-status-msg">>> APIキーが未検出です。AIプロトコルを有効化してください。</p>
+                    <p style="font-size: 0.8rem;">[STATUS: CLOUD CONNECTION ACTIVE]</p>
                 </div>
 
                 <div id="character-list" class="char-grid"></div>
@@ -265,11 +210,10 @@
     </script>
 
     <script type="module">
-    import { sendToAI } from './ai.js';
-    window.sendToAI = sendToAI;
-    console.log("AI Module Loaded and window.sendToAI is ready.");
-</script>
+        import { sendToAI } from './ai.js';
+        window.sendToAI = sendToAI;
+    </script>
 
-<script src="script_detective.js"></script>
+    <script src="script_detective.js"></script>
 </body>
 </html>
