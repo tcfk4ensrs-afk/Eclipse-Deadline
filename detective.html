@@ -265,9 +265,11 @@
     </script>
 
     <script type="module">
-        import { sendToAI } from './ai.js';
-        window.sendToAI = sendToAI;
-    </script>
-    <script src="script_detective.js"></script>
+    import { sendToAI } from './ai.js';
+    window.sendToAI = sendToAI;
+    console.log("AI Module Loaded and window.sendToAI is ready.");
+</script>
+
+<script src="script_detective.js"></script>
 </body>
 </html>
