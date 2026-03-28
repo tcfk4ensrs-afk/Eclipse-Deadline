@@ -45,12 +45,26 @@ class Game {
             this.renderCharacterList();
             this.updateEvidenceUI();
             
-            const modal = document.getElementById('api-modal');
-            if (sessionStorage.getItem('GEMINI_API_KEY')) {
-                if (modal) modal.style.display = 'none';
+            // APIキーのインライン設定エリアの制御
+            const statusMsg = document.getElementById('api-status-msg');
+            const keyInput = document.getElementById('api-key-input');
+            const savedKey = sessionStorage.getItem('GEMINI_API_KEY');
+
+            if (savedKey) {
+                // キー設定済み
+                if (statusMsg) {
+                    statusMsg.innerText = ">> APIキー構成済み。通信チャネルは確立されています。";
+                    statusMsg.style.color = "var(--neon-green)";
+                }
+                if (keyInput) keyInput.value = "********"; 
             } else {
-                if (modal) modal.style.display = 'flex';
+                // キー未設定
+                if (statusMsg) {
+                    statusMsg.innerText = ">> 警告: APIキーが未設定です。対話プロトコルを実行できません。";
+                    statusMsg.style.color = "var(--error-red)";
+                }
             }
+
             console.log("System Ready.");
         } catch (e) {
             console.error("Init Error:", e);
@@ -177,7 +191,6 @@ class Game {
     appendMessage(role, text) {
         let displayOuter = text;
         if (role === 'model') {
-            // inner_voiceタグを完全に除去し、outer_voiceラベルも消す
             displayOuter = text.replace(/outer_voice[:：]\s*/i, "").replace(/inner_voice[:：][\s\S]*/i, "").trim();
         }
         if (!this.state.history[this.currentCharacterId]) {
@@ -201,10 +214,8 @@ class Game {
 
     constructPrompt(char) {
         const history = this.state.history[char.id] || [];
-        const talkCount = history.filter(h => h.role === 'model').length; 
         const evidenceString = this.state.evidences.map(e => `${e.name || e.item}(内容:${e.detail})`).join(', ');
 
-        // 他人の情報を積極的に喋らせるための指示
         let gossipBoost = "";
         if (char.id === 'captain') {
             gossipBoost = "\n- 【重要】『不自然に軽いコンテナ』の件は、管理責任を問われないよう「昨日までは重かった」「リクが怪しい」と即座にプレイヤーへ伝えてください。";
@@ -225,8 +236,8 @@ ${char.personality}
 
 # 応答ルール (厳守)
 1. **【inner_voiceの使用禁止】**: すべての思考、動揺、情報はセリフ（outer_voice）内で表現してください。
-2. **【他人の秘密は即出し】**: 自分以外の不審な点、他人の秘密、周囲の状況の変化（コンテナが軽い等）は、プレイヤーから聞かれたら（あるいは話の流れで）隠さず即座に喋ってください。むしろ他人を疑わせることで自分の潔白を主張してください。
-3. **【自分の罪のみ隠匿】**: 自分の致命的な罪（${JSON.stringify(char.secret_sin || char.secrets)}）だけは、証拠が【確定】になるまでとぼけてください。
+2. **【他人の秘密は即出し】**: 自分以外の不審な点、他人の秘密、周囲の状況の変化（コンテナが軽い等）は、プレイヤーから聞かれたら（あるいは話の流れで）隠さず即座に喋ってください。
+3. **【自分の罪のみ隠匿】**: 自分の致命的な罪だけは、証拠が【確定】になるまでとぼけてください。
 4. **【形式】**: 以下の形式で回答してください。
 outer_voice: [セリフと描写]
 ${gossipBoost}
@@ -259,12 +270,12 @@ window.game = game;
 
 window.saveApiKey = function() {
     const input = document.getElementById('api-key-input');
-    if (input && input.value.trim() !== "") {
+    if (input && input.value.trim() !== "" && input.value.trim() !== "********") {
         sessionStorage.setItem('GEMINI_API_KEY', input.value.trim());
         alert("APIキーを保存しました。");
         location.reload();
     } else {
-        alert("キーを入力してください。");
+        alert("有効なキーを入力してください。");
     }
 };
 
