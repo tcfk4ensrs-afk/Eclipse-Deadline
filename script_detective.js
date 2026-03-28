@@ -29,7 +29,7 @@ class Game {
             }
         };
 
-        // 真実データ：確定時にUIに表示される内容（新アイテム2つを追加）
+        // 真実データ：確定時にUIに表示される内容
         this.truthReference = {
             "医師の遺体": "後頭部に鈍器の痕があり、ノアが『質量』として再利用するためにポッドへ隠した決定的な証拠。",
             "ノイズ混じりの記録データ": "削除ログの復元に成功。14:15にノアと医師がポッドへ入る映像が記録されていた。",
@@ -47,23 +47,8 @@ class Game {
             this.renderCharacterList();
             this.updateEvidenceUI();
             
-            const statusMsg = document.getElementById('api-status-msg');
-            const keyInput = document.getElementById('api-key-input');
-            const savedKey = sessionStorage.getItem('GEMINI_API_KEY');
-
-            if (savedKey) {
-                if (statusMsg) {
-                    statusMsg.innerText = ">> APIキー構成済み。通信チャネルは確立されています。";
-                    statusMsg.style.color = "var(--neon-green)";
-                }
-                if (keyInput) keyInput.value = "********"; 
-            } else {
-                if (statusMsg) {
-                    statusMsg.innerText = ">> 警告: APIキーが未設定です。対話プロトコルを実行できません。";
-                    statusMsg.style.color = "var(--error-red)";
-                }
-            }
-            console.log("System Ready.");
+            // Netlify環境ではフロントのAPIキーチェックは不要（メッセージのみ更新）
+            console.log("System Ready with Cloud Protocol.");
         } catch (e) {
             console.error("Init Error:", e);
         }
@@ -138,7 +123,10 @@ class Game {
         try {
             const char = this.characters.find(c => c.id === this.currentCharacterId);
             const history = this.state.history[this.currentCharacterId] || [];
+            
+            // window.sendToAI を呼び出し（ai.js経由）
             const responseText = await window.sendToAI(this.constructPrompt(char), text, history);
+            
             this.appendMessage('model', responseText);
             this.checkTruthUpdate(responseText);
         } catch (e) {
@@ -155,9 +143,6 @@ class Game {
         this.sendMessage();
     }
 
-    /**
-     * AIの回答テキストをスキャンし、特定のキーワードが含まれていれば証拠を更新する
-     */
     checkTruthUpdate(aiText) {
         const currentId = this.currentCharacterId;
         const revelationTriggers = [
@@ -230,44 +215,51 @@ class Game {
 
         const gossipDatabase = {
             captain: { 
-                others: "リクは借金まみれで医師から密輸の協力を強要されていた。メイは政府に追われている過激な逃亡犯らしい。",
-                deep: "コンテナが軽いのは、ノアがエンジンの再起動に備蓄を転用したからだ。あいつは狂っている。"
+                others: "リクは借金まみれ。メイは政府に追われている逃亡犯らしい。",
+                deep: "コンテナが軽いのは、ノアがエンジンの再起動に備蓄を転用したからだ。"
             },
             pilot: { 
-                others: "船長は重度のアルコール依存症で、前回の航海で事故を起こしかけた。メイがシステムログを弄っているのを見た。",
-                deep: "医師は俺の借金をネタに「密輸」をバラされたくなければ言うことを聞けと迫ってきた。あいつさえいなければ……。"
+                others: "船長は重度のアルコール依存症。メイがシステムログを弄っているのを見た。",
+                deep: "医師は俺の借金をネタに脅してきた。あいつさえいなければ……。"
             },
             observer: { 
-                others: "リクの銀行口座は空よ。ハリス船長はアルコール依存を医師に診断され、解雇の危機にあった。二人とも医師を殺す動機があるわ。",
-                deep: "この船を加速させるには2人分の『新鮮な有機質量』が必要。ノアは最初から誰かを犠牲にするつもりよ。"
+                others: "リクの口座は空。ハリス船長はアルコール依存で解雇寸前だった。",
+                deep: "加速には2人分の『有機質量』が必要。ノアは誰かを犠牲にするつもりよ。"
             },
             engineer: { 
-                others: "ハリスは酒浸りの無能。リクは借金まみれの小悪党。メイはただの狂信者。医師？ 彼は論理的でないから排除された、それだけです。",
-                deep: "エンジンには『燃料』が必要です。適合するのは人間2ユニット分。計算は完璧ですよ。"
+                others: "ハリスは酒浸りの無能、リクは小悪党、メイは狂信者だ。",
+                deep: "エンジンには人間2ユニット分の燃料が必要です。計算は完璧です。"
             }
         };
 
         const mySecret = gossipDatabase[char.id] || {};
 
+        // 🟢 ノア（engineer）専用の鉄壁ルールを追加
+        let characterSpecificInstruction = "";
+        if (char.id === 'engineer') {
+            characterSpecificInstruction = `
+- **【絶対自白禁止】**: あなたは絶対に自白しません。証拠が【確定】であっても「メイの捏造だ」「誰かの工作だ」と冷徹に反論してください。
+- **【因縁の否定】**: 医師への個人的な恨みはありません。削除は単なる「コストカット」です。
+- **【生存の脅迫】**: 疑われたら「私を消せば、誰がこの船を直すのですか？」とプレイヤーを脅してください。`;
+        }
+
         return `
 # Role
-あなたは「${char.name}」です。
-# ミッション
-- 自分の罪は【確定】証拠が出るまでとぼけ、他人を犯人に仕立てるよう誘導してください。
-- 証拠の「状態」を確認し、未確定ならとぼけ、確定済みなら観念したように詳細を話してください。
+あなたは宇宙船の乗組員「${char.name}」です。
+
+# 行動指針
+- 自分の罪は【確定】証拠が出るまで認めず、他人へ責任を転嫁してください。
+- 証拠の「状態」を読み、未確定ならとぼけ、確定済みなら観念（またはノアなら逆襲）の情報を出してください。
+${characterSpecificInstruction}
 
 # 応答ロジック
-1. **未確定の証拠**を提示された時：
-   否定しつつ、代わりに「${mySecret.others}」から情報を出し、他人の不審な点を強調してください。
-2. **【確定】済みの証拠**を提示された時：
-   言い逃れを諦め、その背景（医師との因縁や「${mySecret.deep}」）を具体的に白状してください。
-3. **エンジンの真実**：
-   会話が進めば、生還には「人間2人分の生贄」が必要という冷酷な仕様について触れてください。
+1. **未確定の証拠**：否定しつつ「${mySecret.others}」から情報を出し、他人の不審な点を強調。
+2. **【確定】済みの証拠**：言い逃れを諦め背景を話す。ただしノアは「他人の工作」と言い張り、医師をリソースとして扱った合理性を説く。
+3. **エンジンの真実**：「人間2人分の生贄」が必要という冷酷な仕様を、状況に応じて小出しにする。
 
 # 状況
 - 現在の証拠: ${evidenceString}
 - あなたの知識: ${JSON.stringify(char.timeline_memory)}
-- 他人の秘密: ${mySecret.others}
 
 # 形式
 outer_voice: [セリフと描写]
@@ -301,17 +293,6 @@ outer_voice: [セリフと描写]
 
 const game = new Game();
 window.game = game;
-
-window.saveApiKey = function() {
-    const input = document.getElementById('api-key-input');
-    if (input && input.value.trim() !== "" && input.value.trim() !== "********") {
-        sessionStorage.setItem('GEMINI_API_KEY', input.value.trim());
-        alert("APIキーを保存しました。");
-        location.reload();
-    } else {
-        alert("有効なキーを入力してください。");
-    }
-};
 
 document.addEventListener('DOMContentLoaded', () => {
     game.init();
