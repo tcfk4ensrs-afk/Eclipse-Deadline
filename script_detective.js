@@ -29,13 +29,14 @@ class Game {
             }
         };
 
-        // 真実データ：確定時にUIに表示される内容
+        // 真実データ：確定時にUIに表示される内容（新アイテム2つを追加）
         this.truthReference = {
-            "医師の遺体": "後頭部に鈍器の痕があり、ノアが遺体をポッドへ隠した決定的な証拠。",
+            "医師の遺体": "後頭部に鈍器の痕があり、ノアが『質量』として再利用するためにポッドへ隠した決定的な証拠。",
             "ノイズ混じりの記録データ": "削除ログの復元に成功。14:15にノアと医師がポッドへ入る映像が記録されていた。",
-            "不自然に軽いコンテナ": "備蓄物資はリクが隠す前に、ノアによってエンジンのバイオ燃料として投棄されていた。",
-            "ラベルのない液体瓶": "バイオ燃料装置で密造された酒。ハリス船長はアルコール依存症で医師に弱みを握られていた。",
-            "コンテナ奥の断線したコード": "リクが12:30に切断。彼は多額の借金があり、医師から密輸の片棒を担ぐよう脅されていた。"
+            "不自然に軽いコンテナ": "備蓄物資はリクが盗む前に、ノアによってエンジンの『バイオ・リサイクル』に転用・廃棄されていた。",
+            "ラベルのない液体瓶": "密造された酒。ハリス船長が依存症で、医師に解雇を突きつけられていた動機を示す証拠。",
+            "コンテナ奥の断線したコード": "リクが12:30に切断。多額の借金があり、医師から密輸を強要されていた彼が監視を逃れるための工作跡。",
+            "バイオ・リサイクル・モード": "船を地球へ帰すには、人間2人分の新鮮な有機質量をエネルギーに変えねばならないという残酷な仕様。"
         };
     }
 
@@ -154,14 +155,18 @@ class Game {
         this.sendMessage();
     }
 
+    /**
+     * AIの回答テキストをスキャンし、特定のキーワードが含まれていれば証拠を更新する
+     */
     checkTruthUpdate(aiText) {
         const currentId = this.currentCharacterId;
         const revelationTriggers = [
             { key: "ラベルのない液体瓶", informant: "pilot", triggers: ["酒", "依存症", "事故", "船長", "飲んで"] },
-            { key: "不自然に軽いコンテナ", informant: "captain", triggers: ["軽い", "空", "リク", "エンジン", "質量"] },
-            { key: "コンテナ奥の断線したコード", informant: "observer", triggers: ["借金", "脅迫", "金", "リク", "コード"] },
+            { key: "不自然に軽いコンテナ", informant: "captain", triggers: ["軽い", "空", "リク", "エンジン", "質量", "パージ"] },
+            { key: "コンテナ奥の断線したコード", informant: "observer", triggers: ["借金", "脅迫", "金", "リク", "コード", "切断"] },
             { key: "ノイズ混じりの記録データ", informant: "pilot", triggers: ["メイ", "ログ", "操作", "消去"] },
-            { key: "医師の遺体", informant: "observer", triggers: ["ノア", "質量", "二人分", "リサイクル", "ポッド"] }
+            { key: "医師の遺体", informant: "observer", triggers: ["ノア", "質量", "二人分", "リサイクル", "ポッド", "運び込"] },
+            { key: "バイオ・リサイクル・モード", informant: "engineer", triggers: ["質量", "二人分", "2ユニット", "犠牲", "生贄", "計算"] }
         ];
 
         revelationTriggers.forEach(item => {
@@ -180,8 +185,18 @@ class Game {
                 this.state.evidences[index].detail = `【確定】${newTruth}`;
                 localStorage.setItem('securedEvidence', JSON.stringify(this.state.evidences));
                 this.updateEvidenceUI();
-                this.appendMessage('system', `証拠更新: 「${name}」の真相が判明しました。`);
+                this.appendMessage('system', `[DATA UPDATED] 証拠更新: 「${name}」の真相が判明しました。`);
+                this.flashEffect();
             }
+        }
+    }
+
+    flashEffect() {
+        const main = document.querySelector('.main-panel');
+        if (main) {
+            main.style.transition = "background-color 0.2s";
+            main.style.backgroundColor = "rgba(0, 255, 65, 0.15)";
+            setTimeout(() => { main.style.backgroundColor = "rgba(0, 5, 0, 0.9)"; }, 200);
         }
     }
 
@@ -213,21 +228,20 @@ class Game {
         const history = this.state.history[char.id] || [];
         const evidenceString = this.state.evidences.map(e => `${e.name || e.item}(状態:${e.detail.includes('【確定】') ? '【確定】済み' : '未確定'})`).join(', ');
 
-        // 各キャラが握る「他人の秘密」と「エンジン/医師の裏話」
         const gossipDatabase = {
-            captain: { // ハリス
-                others: "リクは借金まみれで医師から密輸の協力を強要されていた。メイは政府に追われている過激な思想の持ち主らしい。",
+            captain: { 
+                others: "リクは借金まみれで医師から密輸の協力を強要されていた。メイは政府に追われている過激な逃亡犯らしい。",
                 deep: "コンテナが軽いのは、ノアがエンジンの再起動に備蓄を転用したからだ。あいつは狂っている。"
             },
-            pilot: { // リク
-                others: "船長は重度のアルコール依存症で、前回の航海で死亡事故を起こしかけた。メイがシステムログを弄っているのを見た。",
+            pilot: { 
+                others: "船長は重度のアルコール依存症で、前回の航海で事故を起こしかけた。メイがシステムログを弄っているのを見た。",
                 deep: "医師は俺の借金をネタに「密輸」をバラされたくなければ言うことを聞けと迫ってきた。あいつさえいなければ……。"
             },
-            observer: { // メイ
+            observer: { 
                 others: "リクの銀行口座は空よ。ハリス船長はアルコール依存を医師に診断され、解雇の危機にあった。二人とも医師を殺す動機があるわ。",
                 deep: "この船を加速させるには2人分の『新鮮な有機質量』が必要。ノアは最初から誰かを犠牲にするつもりよ。"
             },
-            engineer: { // ノア
+            engineer: { 
                 others: "ハリスは酒浸りの無能。リクは借金まみれの小悪党。メイはただの狂信者。医師？ 彼は論理的でないから排除された、それだけです。",
                 deep: "エンジンには『燃料』が必要です。適合するのは人間2ユニット分。計算は完璧ですよ。"
             }
@@ -239,20 +253,21 @@ class Game {
 # Role
 あなたは「${char.name}」です。
 # ミッション
-- 自分の罪（${JSON.stringify(char.secret_sin || char.secrets)}）は【確定】証拠が出るまでとぼける。
-- 他人の不審な点は「保身のため」に積極的に暴露し、プレイヤーの疑いを逸らす。
+- 自分の罪は【確定】証拠が出るまでとぼけ、他人を犯人に仕立てるよう誘導してください。
+- 証拠の「状態」を確認し、未確定ならとぼけ、確定済みなら観念したように詳細を話してください。
 
 # 応答ロジック
 1. **未確定の証拠**を提示された時：
-   「知らない」「機械の故障だ」と否定しつつ、代わりに「${mySecret.others}」から一つ情報を小出しにして他人を疑わせてください。
+   否定しつつ、代わりに「${mySecret.others}」から情報を出し、他人の不審な点を強調してください。
 2. **【確定】済みの証拠**を提示された時：
-   言い逃れができないと判断し、観念したように「${mySecret.deep}」などの物語の核心や、医師とのドロドロした因縁を詳しく話してください。
+   言い逃れを諦め、その背景（医師との因縁や「${mySecret.deep}」）を具体的に白状してください。
 3. **エンジンの真実**：
-   会話が進んだら、船を動かすには「人間2人分の質量（生贄）」が必要であるという残酷な仕様について言及してください。
+   会話が進めば、生還には「人間2人分の生贄」が必要という冷酷な仕様について触れてください。
 
 # 状況
 - 現在の証拠: ${evidenceString}
-- あなたの知る事実: ${JSON.stringify(char.timeline_memory)}
+- あなたの知識: ${JSON.stringify(char.timeline_memory)}
+- 他人の秘密: ${mySecret.others}
 
 # 形式
 outer_voice: [セリフと描写]
@@ -269,9 +284,13 @@ outer_voice: [セリフと描写]
         }
         list.innerHTML = this.state.evidences.map(ev => {
             const name = ev.name || ev.item || "不明なアイテム";
+            const isConfirmed = ev.detail.includes("【確定】");
             return `
-                <div class="evidence-item" onclick="game.presentEvidence('${name}')" style="cursor:pointer; border:1px solid #333; margin-bottom:5px; padding:8px; border-radius:4px; background:rgba(255,255,255,0.05);">
-                    <strong style="color:var(--neon-green);">● ${name}</strong>
+                <div class="evidence-item" onclick="game.presentEvidence('${name}')" 
+                     style="cursor:pointer; border:1px solid ${isConfirmed ? 'var(--neon-green)' : '#333'}; 
+                            margin-bottom:5px; padding:8px; border-radius:4px; 
+                            background:${isConfirmed ? 'rgba(0, 255, 65, 0.1)' : 'rgba(255,255,255,0.05)'};">
+                    <strong style="color:${isConfirmed ? 'var(--neon-green)' : '#888'};">● ${name}</strong>
                     <p style="font-size:0.85em; margin:4px 0;">${ev.detail}</p>
                     <small style="color:#777;">>> 突きつける</small>
                 </div>
