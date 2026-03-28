@@ -31,6 +31,50 @@
             .main-panel { order: 1; height: 70vh; min-height: 400px; }
         }
 
+        /* --- API Config Area (Inline) --- */
+        .api-config-area {
+            border: 1px solid #00ff41;
+            padding: 15px;
+            margin-bottom: 20px;
+            background: rgba(0, 255, 65, 0.05);
+        }
+
+        .api-config-area h4 {
+            margin: 0 0 10px 0;
+            font-size: 0.7rem;
+            color: #00ff41;
+            letter-spacing: 1px;
+        }
+
+        .api-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .api-input-group input {
+            flex-grow: 1;
+            background: #000;
+            color: #fff;
+            border: 1px solid #00ff41;
+            padding: 8px;
+            font-family: monospace;
+        }
+
+        .api-input-group button {
+            background: #00ff41;
+            color: #000;
+            border: none;
+            padding: 0 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .api-status-msg {
+            font-size: 0.65rem;
+            margin-top: 8px;
+            color: #ffff00;
+        }
+
         /* --- 地図モーダル演出 --- */
         #map-overlay {
             display: none;
@@ -92,7 +136,7 @@
                 </div>
             </div>
             
-            <div class="status-box">
+            <div class="status-box" style="margin-top: 15px;">
                 <button id="accuse-btn" class="danger-btn" onclick="goToAccusation()">👉 真犯人を告発する</button>
             </div>
         </div>
@@ -100,20 +144,30 @@
         <div class="panel main-panel">
             <div id="main-menu">
                 <div class="header">
-                    <h2>INTERROGATION</h2>
-                    <p style="font-size: 0.8rem;">対象を選択してください。</p>
+                    <h2>INTERROGATION PROTOCOL</h2>
+                    <p style="font-size: 0.8rem;">システム構成と容疑者の選択</p>
                 </div>
+
+                <div class="api-config-area">
+                    <h4>[SYSTEM CONFIG: GEMINI API]</h4>
+                    <div class="api-input-group">
+                        <input type="password" id="api-key-input" placeholder="AIzaSy...">
+                        <button onclick="saveApiKey()">SAVE</button>
+                    </div>
+                    <p id="api-status-msg" class="api-status-msg">>> APIキーが未検出です。AIプロトコルを有効化してください。</p>
+                </div>
+
                 <div id="character-list" class="char-grid"></div>
             </div>
 
             <div id="interrogation-room" style="display: none; height: 100%; flex-direction: column;">
                 <div class="chat-header" style="display: flex; align-items: center; gap: 10px; padding-bottom: 10px;">
-                    <button id="back-btn" style="background: none; color: #00ff41; border: 1px solid #00ff41;">⬅</button>
+                    <button id="back-btn" style="background: none; color: #00ff41; border: 1px solid #00ff41;">⬅ 戻る</button>
                     <span id="target-name">TARGET</span>
                 </div>
-                <div id="chat-log" style="flex-grow: 1; overflow-y: auto; border: 1px solid #222; padding: 10px; margin-bottom: 10px;"></div>
+                <div id="chat-log" style="flex-grow: 1; overflow-y: auto; border: 1px solid #222; padding: 10px; margin-bottom: 10px; background: rgba(0,0,0,0.5);"></div>
                 <div class="input-area" style="display: flex; gap: 5px;">
-                    <input type="text" id="chat-input" placeholder="問い詰める..." style="flex-grow: 1; background: #000; color: #fff; border: 1px solid #00ff41; padding: 10px;">
+                    <input type="text" id="chat-input" placeholder="問い詰める内容を入力..." style="flex-grow: 1; background: #000; color: #fff; border: 1px solid #00ff41; padding: 10px;">
                     <button id="send-btn" style="background: #00ff41; color: #000; border: none; padding: 0 20px; font-weight: bold;">SEND</button>
                 </div>
             </div>
@@ -133,9 +187,9 @@
             document.getElementById('map-overlay').style.display = 'none';
         }
 
-        // 告発遷移
+        // 🟢 告発遷移
         function goToAccusation() {
-            if (confirm("告発プロトコルへ移行しますか？")) {
+            if (confirm("尋問を終了し、告発プロトコルへ移行しますか？\n（この操作は取り消せません）")) {
                 document.body.style.opacity = "0";
                 document.body.style.transition = "opacity 1s";
                 setTimeout(() => { window.location.href = "accusation.html"; }, 1000);
