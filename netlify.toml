@@ -2,7 +2,11 @@
   publish = "."
   functions = "netlify/functions"
 
+# 🟢 リダイレクト設定をよりシンプルに修正
 [[redirects]]
-  from = "/.netlify/functions/*"
+  from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
+
+# 🟢 または、標準のパスをそのまま使う場合は以下だけでもOK（通常は設定不要）
+# Netlifyはデフォルトで /.netlify/functions/* を認識します。
