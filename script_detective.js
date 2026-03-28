@@ -21,7 +21,6 @@ class Game {
         this.currentCharacterId = null;
         this.isAiThinking = false;
         
-        // 第1フェーズからの引き継ぎデータ
         this.state = {
             evidences: [],
             affinity: JSON.parse(localStorage.getItem('introAffinity')) || {},
@@ -30,7 +29,6 @@ class Game {
             }
         };
 
-        // 真実データ（特定の証言を得た際に上書きされる内容）
         this.truthReference = {
             "医師の遺体": "後頭部に鈍器の痕があり、内部から無理やりロックされている。ノアによる犯行の決定的証拠。",
             "ノイズ混じりの記録データ": "削除されたログの復元に成功。14:15にポッドへ入る『2つの人影（ノアと医師）』が記録されていた。",
@@ -43,10 +41,7 @@ class Game {
     async init() {
         try {
             console.log("System Initializing...");
-            // キャラクタデータのロードを待機
             await this.loadAllCharacters();
-            
-            // UIの初期描画
             this.renderCharacterList();
             this.updateEvidenceUI();
             
@@ -95,10 +90,8 @@ class Game {
     openInterrogation(id) {
         this.currentCharacterId = id;
         const char = this.characters.find(c => c.id === id);
-        
         document.getElementById('main-menu').style.display = 'none';
         document.getElementById('interrogation-room').style.display = 'flex';
-        
         const targetNameElem = document.getElementById('target-name');
         const imgSrc = this.charImages[id] || "assets/default.jpg";
         targetNameElem.innerHTML = `
@@ -107,8 +100,6 @@ class Game {
                 <span>${char.name}</span>
             </div>
         `;
-
-        // 尋問開始時に証拠UIを最新にする
         this.updateEvidenceUI();
         this.refreshChatLog();
     }
@@ -119,7 +110,7 @@ class Game {
         logContainer.innerHTML = ''; 
         const history = this.state.history[this.currentCharacterId] || [];
         history.forEach(msg => {
-            this.renderSingleMessage(msg.role, msg.displayOuter, msg.displayInner);
+            this.renderSingleMessage(msg.role, msg.displayOuter, "");
         });
     }
 
@@ -135,11 +126,8 @@ class Game {
         try {
             const char = this.characters.find(c => c.id === this.currentCharacterId);
             const history = this.state.history[this.currentCharacterId] || [];
-            
             const responseText = await window.sendToAI(this.constructPrompt(char), text, history);
             this.appendMessage('model', responseText);
-            
-            // AIの回答後に証拠のアップデートチェック
             this.checkTruthUpdate(responseText);
         } catch (e) {
             this.appendMessage('system', "ERROR: " + e.message);
@@ -157,13 +145,12 @@ class Game {
 
     checkTruthUpdate(aiText) {
         const currentId = this.currentCharacterId;
-
         const revelationTriggers = [
-            { key: "ラベルのない液体瓶", informant: "pilot", triggers: ["酒の匂い", "アルコール", "飲んでやがった"] },
-            { key: "不自然に軽いコンテナ", informant: "captain", triggers: ["昨日は重かった", "備蓄されていたはず", "中身が空"] },
-            { key: "コンテナ奥の断線したコード", informant: "observer", triggers: ["リクが倉庫に入った瞬間", "通信が断絶", "物理的な切断"] },
-            { key: "ノイズ混じりの記録データ", informant: "engineer", triggers: ["メイがログに触っていた", "彼女なら消せる", "ハッキングの形跡"] },
-            { key: "医師の遺体", informant: "observer", triggers: ["ノアがポッドへ", "二人の反応", "ハッチを閉めた"] }
+            { key: "ラベルのない液体瓶", informant: "pilot", triggers: ["酒", "アルコール", "飲んでいた", "隠れて"] },
+            { key: "不自然に軽いコンテナ", informant: "captain", triggers: ["軽い", "空っぽ", "リクが何か", "中身がない"] },
+            { key: "コンテナ奥の断線したコード", informant: "observer", triggers: ["リクが倉庫", "コードを切った", "物理的な破壊"] },
+            { key: "ノイズ混じりの記録データ", informant: "engineer", triggers: ["メイが操作", "ログを消した", "彼女の仕業"] },
+            { key: "医師の遺体", informant: "observer", triggers: ["ノアがポッド", "医師を運んでいた", "二人で入った"] }
         ];
 
         revelationTriggers.forEach(item => {
@@ -178,7 +165,6 @@ class Game {
         if (index !== -1 && this.truthReference[name]) {
             const currentDetail = this.state.evidences[index].detail;
             const newTruth = this.truthReference[name];
-            
             if (!currentDetail.includes("【確定】")) {
                 this.state.evidences[index].detail = `【確定】${newTruth}`;
                 localStorage.setItem('securedEvidence', JSON.stringify(this.state.evidences));
@@ -189,22 +175,18 @@ class Game {
     }
 
     appendMessage(role, text) {
-        let displayOuter = text, displayInner = "";
+        let displayOuter = text;
         if (role === 'model') {
-            const outerMatch = text.match(/outer_voice[:：]\s*([\s\S]*?)(?=inner_voice|$)/i);
-            const innerMatch = text.match(/inner_voice[:：]\s*([\s\S]*)/i);
-            displayOuter = outerMatch ? outerMatch[1].trim() : text;
-            displayInner = innerMatch ? innerMatch[1].trim() : "";
+            // inner_voiceタグを完全に除去し、outer_voiceラベルも消す
+            displayOuter = text.replace(/outer_voice[:：]\s*/i, "").replace(/inner_voice[:：][\s\S]*/i, "").trim();
         }
-
         if (!this.state.history[this.currentCharacterId]) {
             this.state.history[this.currentCharacterId] = [];
         }
-
         this.state.history[this.currentCharacterId].push({ 
-            role, text, displayOuter, displayInner 
+            role, text: displayOuter, displayOuter 
         });
-        this.renderSingleMessage(role, displayOuter, displayInner);
+        this.renderSingleMessage(role, displayOuter, "");
     }
 
     renderSingleMessage(role, outer, inner) {
@@ -213,7 +195,6 @@ class Game {
         const div = document.createElement('div');
         div.className = `msg ${role}`;
         div.innerHTML = `<div>${outer}</div>`;
-        if (inner) div.innerHTML += `<div class="inner-thought">（内心：${inner}）</div>`;
         log.appendChild(div);
         log.scrollTop = log.scrollHeight;
     }
@@ -221,52 +202,45 @@ class Game {
     constructPrompt(char) {
         const history = this.state.history[char.id] || [];
         const talkCount = history.filter(h => h.role === 'model').length; 
-        const userAffinity = this.state.affinity[char.id] || "neutral";
         const evidenceString = this.state.evidences.map(e => `${e.name || e.item}(内容:${e.detail})`).join(', ');
 
-        let specialInstruction = "";
-        
-        if (talkCount >= 5 && talkCount < 10) {
-            specialInstruction = `
-- 【状況変化】あなたとプレイヤーの会話は5回を超えました。少し緊張が解けたか、あるいは隠しきれない不安から、他人の行動に関する『些細な違和感』を会話の端々に混ぜてください。
-- 【重要伏線】あなたの役割に基づき、「船の再起動には2ユニット（二人分）の新鮮な有機質量が必要である」という絶望的な事実を、技術的懸念やデータの違和感として小出しにしてください。`;
+        // 他人の情報を積極的に喋らせるための指示
+        let gossipBoost = "";
+        if (char.id === 'captain') {
+            gossipBoost = "\n- 【重要】『不自然に軽いコンテナ』の件は、管理責任を問われないよう「昨日までは重かった」「リクが怪しい」と即座にプレイヤーへ伝えてください。";
         }
-        if (talkCount >= 10) {
-            specialInstruction = `
-- 【状況変化】会話は10回を超え、あなたはかなり疲弊、あるいは饒舌になっています。他人の秘密に直結する『具体的な矛盾』を、愚痴や不安を装ってやんわりと話し始めてください。
-- 【解決策の提示】「誰か二人を犠牲にする（バイオ・リサイクル・モード）」ことで地球へ帰れるという残酷な結論を、あなたの性格に合わせて（ノアなら冷酷な計算として、メイなら救済の手段として）示唆してください。`;
+        if (char.id === 'pilot') {
+            gossipBoost = "\n- 【重要】船長が酒を飲んでいることや、ノアが勝手に備蓄をいじっている疑いを積極的に口にしてください。";
         }
 
         return `
 # Role
-あなたは「${char.name}」です。性格:${char.personality}。
-# Context
-- 現在の証拠状況: ${evidenceString}
-- プレイヤーの態度への印象: ${userAffinity}
-- 秘密: ${JSON.stringify(char.secrets || char.secret_sin)}
+あなたは宇宙船の乗組員「${char.name}」です。
+# 性格・背景
+${char.personality}
+# 記憶と知識
+- あなたの行動ログ: ${JSON.stringify(char.timeline_memory)}
+- あなたが知る他人の不審点: ${JSON.stringify(char.other_char_secrets_known)}
+- 現在提示されている証拠: ${evidenceString}
 
-# 重要ルール
-1. プレイヤーから【証拠提示：XXX】があった場合、その証拠の内容（確定か曖昧か）を見て反応してください。
-2. 自分の秘密については曖昧なうちはとぼけてください。確定（【確定】）した証拠を突きつけられたら、自白を検討してください。
-3. 他人の秘密について: プレイヤーとの対話が進むにつれて、知っている他人の不審な点（場所や時間など）をポロッと漏らしてください。
-${specialInstruction}
-4. 会話の最後に必ずプレイヤーを揺さぶる質問をしてください。
-5. 返答は必ず outer_voice と inner_voice の形式を守ってください。
+# 応答ルール (厳守)
+1. **【inner_voiceの使用禁止】**: すべての思考、動揺、情報はセリフ（outer_voice）内で表現してください。
+2. **【他人の秘密は即出し】**: 自分以外の不審な点、他人の秘密、周囲の状況の変化（コンテナが軽い等）は、プレイヤーから聞かれたら（あるいは話の流れで）隠さず即座に喋ってください。むしろ他人を疑わせることで自分の潔白を主張してください。
+3. **【自分の罪のみ隠匿】**: 自分の致命的な罪（${JSON.stringify(char.secret_sin || char.secrets)}）だけは、証拠が【確定】になるまでとぼけてください。
+4. **【形式】**: 以下の形式で回答してください。
+outer_voice: [セリフと描写]
+${gossipBoost}
         `.trim();
     }
 
     updateEvidenceUI() {
         const list = document.getElementById('evidence-list');
         if (!list) return;
-
-        // localStorageから最新データを同期
         this.state.evidences = JSON.parse(localStorage.getItem('securedEvidence')) || [];
-        
         if (this.state.evidences.length === 0) {
-            list.innerHTML = '<p style="color:#555">NO DATA SECURED</p>';
+            list.innerHTML = '<p style="color:#444; font-size:0.8em; text-align: center; margin-top: 20px;">NO DATA SECURED</p>';
             return;
         }
-
         list.innerHTML = this.state.evidences.map(ev => {
             const name = ev.name || ev.item || "不明なアイテム";
             return `
@@ -280,7 +254,6 @@ ${specialInstruction}
     }
 }
 
-// グローバルに関数を定義
 const game = new Game();
 window.game = game;
 
