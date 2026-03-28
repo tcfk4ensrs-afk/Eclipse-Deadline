@@ -1,27 +1,20 @@
 // ai.js
 export async function sendToAI(systemPrompt, userText, history = []) {
-    try {
-        // Netlify Functions のエンドポイントを叩く
-        const response = await fetch('/.netlify/functions/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                systemPrompt: systemPrompt,
-                userText: userText,
-                history: history // 過去の会話ログ
-            })
-        });
+    const response = await fetch('/.netlify/functions/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ systemPrompt, userText, history })
+    });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || '通信エラーが発生しました');
-        }
+    const data = await response.json();
 
-        const data = await response.json();
-        // Geminiのレスポンス構造に合わせて抽出
+    // 🟢 修正点：データの構造をチェックする
+    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
         return data.candidates[0].content.parts[0].text;
-    } catch (error) {
-        console.error("AI Service Error:", error);
-        throw error;
+    } else {
+        console.error("Unexpected AI Response:", data);
+        // エラーの詳細があればそれを表示、なければ一般的なエラーを出す
+        const errorMsg = data.details?.error?.message || data.error || "AIの応答構造が異常です";
+        throw new Error(errorMsg);
     }
 }
