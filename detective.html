@@ -7,7 +7,11 @@
     <link rel="stylesheet" href="style_detective.css">
     <style>
         /* --- 基本レスポンシブ設定 --- */
-        body { margin: 0; padding: 0; overflow-x: hidden; }
+        body { 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; /* 全体のスクロールを禁止 */
+        }
 
         .game-container {
             display: grid;
@@ -19,24 +23,52 @@
             box-sizing: border-box;
         }
 
-        /* スマホ用レイアウト（画面幅が短い時） */
+        /* スマホ用レイアウト */
         @media (max-width: 850px) {
             .game-container {
                 display: flex;
                 flex-direction: column;
-                height: auto;
-                overflow-y: auto;
+                height: 100vh;
+                overflow: hidden;
             }
-            .side-panel { order: 2; width: 100%; }
-            .main-panel { order: 1; height: 70vh; min-height: 400px; }
+            .side-panel { 
+                order: 2; 
+                width: 100%; 
+                height: 30%; /* スマホ時は下部に証拠リスト */
+            }
+            .main-panel { 
+                order: 1; 
+                height: 70%; 
+                min-height: 300px; 
+            }
         }
 
-        /* --- API Config Area (Inline) --- */
+        /* --- メインパネルの内部レイアウト --- */
+        .main-panel {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* パネル自体からはみ出さない */
+        }
+
+        #main-menu {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* キャラ選択グリッドもスクロール可能に */
+        .char-grid {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        /* --- API Config Area --- */
         .api-config-area {
             border: 1px solid #00ff41;
             padding: 15px;
             margin-bottom: 20px;
             background: rgba(0, 255, 65, 0.05);
+            flex-shrink: 0; /* 潰れないように固定 */
         }
 
         .api-config-area h4 {
@@ -100,6 +132,7 @@
             border: 1px solid #00ff41;
             padding: 8px;
             background: rgba(0, 10, 0, 0.8);
+            flex-shrink: 0;
         }
 
         .map-container img {
@@ -109,9 +142,43 @@
             transition: 0.3s;
         }
 
-        .map-container img:hover { filter: none; }
+        /* --- 尋問ルームのレイアウト修正 --- */
+        #interrogation-room {
+            display: none; /* JSで flex に変更される */
+            height: 100%;
+            flex-direction: column;
+            overflow: hidden; /* 内部パーツの制御 */
+        }
 
-        /* 告発ボタン */
+        .chat-header {
+            flex-shrink: 0; /* ヘッダーの高さは固定 */
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+        }
+
+        /* 🟢 重要：チャットログを可変にする */
+        #chat-log {
+            flex-grow: 1; /* 余ったスペースをすべて埋める */
+            overflow-y: auto; /* ここだけスクロールを許可 */
+            border: 1px solid #222;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: rgba(0,0,0,0.5);
+            scrollbar-width: thin;
+            scrollbar-color: #00ff41 transparent;
+        }
+
+        .input-area {
+            flex-shrink: 0; /* 入力欄は絶対に潰さない */
+            display: flex;
+            gap: 5px;
+            background: #000;
+            padding-top: 5px;
+        }
+
         .danger-btn {
             background: #4a0000; color: #ff3333; border: 1px solid #ff3333;
             padding: 12px; width: 100%; cursor: pointer; font-weight: bold;
@@ -127,7 +194,7 @@
     <div class="game-container">
         <div class="panel side-panel">
             <h3>SECURED EVIDENCE</h3>
-            <div id="evidence-list" style="flex-grow: 1; overflow-y: auto; max-height: 30vh;"></div>
+            <div id="evidence-list" style="flex-grow: 1; overflow-y: auto;"></div>
 
             <div class="map-panel">
                 <h4 style="font-size: 0.6rem; color: #00ff41; text-align: center; margin: 0 0 5px 0;">SCHEMATIC: MAP-01</h4>
@@ -136,7 +203,7 @@
                 </div>
             </div>
             
-            <div class="status-box" style="margin-top: 15px;">
+            <div class="status-box" style="margin-top: 15px; flex-shrink: 0;">
                 <button id="accuse-btn" class="danger-btn" onclick="goToAccusation()">👉 真犯人を告発する</button>
             </div>
         </div>
@@ -160,22 +227,23 @@
                 <div id="character-list" class="char-grid"></div>
             </div>
 
-            <div id="interrogation-room" style="display: none; height: 100%; flex-direction: column;">
-                <div class="chat-header" style="display: flex; align-items: center; gap: 10px; padding-bottom: 10px;">
-                    <button id="back-btn" style="background: none; color: #00ff41; border: 1px solid #00ff41;">⬅ 戻る</button>
+            <div id="interrogation-room">
+                <div class="chat-header">
+                    <button id="back-btn" style="background: none; color: #00ff41; border: 1px solid #00ff41; cursor: pointer;">⬅ 戻る</button>
                     <span id="target-name">TARGET</span>
                 </div>
-                <div id="chat-log" style="flex-grow: 1; overflow-y: auto; border: 1px solid #222; padding: 10px; margin-bottom: 10px; background: rgba(0,0,0,0.5);"></div>
-                <div class="input-area" style="display: flex; gap: 5px;">
+                
+                <div id="chat-log"></div>
+                
+                <div class="input-area">
                     <input type="text" id="chat-input" placeholder="問い詰める内容を入力..." style="flex-grow: 1; background: #000; color: #fff; border: 1px solid #00ff41; padding: 10px;">
-                    <button id="send-btn" style="background: #00ff41; color: #000; border: none; padding: 0 20px; font-weight: bold;">SEND</button>
+                    <button id="send-btn" style="background: #00ff41; color: #000; border: none; padding: 0 20px; font-weight: bold; cursor: pointer;">SEND</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // 🟢 画像拡大ロジック
         function openMap(src) {
             const overlay = document.getElementById('map-overlay');
             const img = document.getElementById('enlarged-map');
@@ -187,7 +255,6 @@
             document.getElementById('map-overlay').style.display = 'none';
         }
 
-        // 🟢 告発遷移
         function goToAccusation() {
             if (confirm("尋問を終了し、告発プロトコルへ移行しますか？\n（この操作は取り消せません）")) {
                 document.body.style.opacity = "0";
