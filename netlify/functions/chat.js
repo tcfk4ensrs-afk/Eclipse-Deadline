@@ -5,7 +5,7 @@ exports.handler = async (event) => {
 
     try {
         const { systemPrompt, userText, history } = JSON.parse(event.body);
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
         
         const payload = {
             contents: [
