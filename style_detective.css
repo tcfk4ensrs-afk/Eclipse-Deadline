@@ -5,19 +5,22 @@
     --warning-yellow: #ffff00;
 }
 
+/* 画面全体の固定 */
 body {
     background: var(--dark-bg);
     color: var(--neon-green);
     font-family: 'Courier New', monospace;
     margin: 0;
+    padding: 0;
     height: 100vh;
+    width: 100vw;
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
+    overflow: hidden; /* 画面全体のスクロールを禁止 */
 }
 
-/* スキャンラインエフェクト（任意） */
+/* スキャンラインエフェクト */
 body::after {
     content: " ";
     display: block;
@@ -29,105 +32,75 @@ body::after {
     pointer-events: none;
 }
 
+/* メインコンテナ */
 .game-container {
     display: flex;
-    width: 95vw;
-    height: 90vh;
+    width: 96vw;
+    height: 92vh;
     gap: 20px;
+    box-sizing: border-box;
 }
 
+/* 共通パネル設定 */
 .panel {
     border: 1px solid var(--neon-green);
     background: rgba(0, 10, 0, 0.9);
     padding: 20px;
     box-shadow: inset 0 0 20px var(--dim-green);
-}
-
-.side-panel { width: 300px; display: flex; flex-direction: column; }
-.main-panel { flex: 1; display: flex; flex-direction: column; position: relative; }
-
-h3 { border-bottom: 1px solid var(--neon-green); margin-top: 0; padding-bottom: 10px; letter-spacing: 2px; }
-
-/* 証拠品リスト */
-.evidence-item {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 10px;
-    margin-bottom: 10px;
-    border-left: 3px solid var(--warning-yellow);
-    font-size: 0.9em;
-    animation: fadeIn 0.5s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateX(-10px); }
-    to { opacity: 1; transform: translateX(0); }
-}
-
-/* キャラクター選択グリッド */
-.char-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-    margin-top: 20px;
-}
-
-.char-card {
-    border: 1px solid var(--neon-green);
-    background: #000;
     display: flex;
-    align-items: center;
-    padding: 0;
-    height: 100px;
-    cursor: pointer;
-    transition: 0.3s;
-    overflow: hidden;
+    flex-direction: column;
+    overflow: hidden; /* パネル自体からはみ出さない */
+    box-sizing: border-box;
+}
+
+/* --- 左パネル (証拠品) --- */
+.side-panel {
+    width: 320px;
+    flex-shrink: 0;
+}
+
+#evidence-list {
+    flex: 1; /* 証拠リストが余白を埋める */
+    overflow-y: auto; /* 証拠が増えたらここだけスクロール */
+    margin-bottom: 15px;
+    padding-right: 5px;
+}
+
+/* --- 右パネル (尋問メイン) --- */
+.main-panel {
+    flex: 1;
     position: relative;
 }
 
-/* カード内の画像エリア */
-.char-thumb {
-    width: 100px;
-    height: 100px;
-    border-right: 1px solid var(--neon-green);
-    overflow: hidden;
-    background: #051a05;
+h3 {
+    border-bottom: 1px solid var(--neon-green);
+    margin-top: 0;
+    padding-bottom: 10px;
+    letter-spacing: 2px;
+    flex-shrink: 0; /* 見出しは潰さない */
 }
 
-.char-thumb img {
-    width: 100%;
+/* メインメニュー (キャラ選択) */
+#main-menu {
+    display: flex;
+    flex-direction: column;
     height: 100%;
-    object-fit: cover;
-    filter: sepia(1) hue-rotate(90deg) brightness(0.8);
-    transition: 0.3s;
 }
 
-/* カード内のテキストエリア */
-.char-details {
-    flex: 1;
-    padding: 10px;
-    text-align: left;
+.char-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 20px;
+    overflow-y: auto;
 }
 
-.char-details h4 { margin: 0; font-size: 1.1em; text-transform: uppercase; }
-.char-details p { margin: 5px 0 0; font-size: 0.8em; color: var(--neon-green); opacity: 0.7; }
-
-/* ホバー時の演出 */
-.char-card:hover {
-    background: var(--dim-green);
-    box-shadow: 0 0 15px var(--neon-green);
-    transform: scale(1.02);
-}
-
-.char-card:hover .char-thumb img {
-    filter: none;
-    brightness: 1.1;
-}
-
-/* チャット画面 */
+/* --- 尋問ルーム (重要) --- */
 #interrogation-room {
     display: none; /* JSでflexに切り替え */
     flex-direction: column;
     height: 100%;
+    overflow: hidden; /* 内部パーツの制御 */
 }
 
 .chat-header {
@@ -137,59 +110,97 @@ h3 { border-bottom: 1px solid var(--neon-green); margin-top: 0; padding-bottom: 
     padding-bottom: 15px;
     border-bottom: 1px solid var(--dim-green);
     margin-bottom: 15px;
+    flex-shrink: 0;
 }
 
-/* 尋問中の相手アイコン */
-#target-name img {
-    filter: sepia(1) hue-rotate(90deg) brightness(1.2);
-    box-shadow: 0 0 10px var(--neon-green);
-}
-
+/* 🟢 チャットログエリア */
 #chat-log {
-    flex: 1;
+    flex: 1; /* これにより入力欄を下に押しやり、自身が伸縮する */
     overflow-y: auto;
     padding: 15px;
     border: 1px inset var(--neon-green);
     background: rgba(0, 0, 0, 0.8);
     border-radius: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--neon-green) transparent;
 }
 
-/* メッセージスタイル */
-.msg { margin-bottom: 20px; line-height: 1.6; max-width: 85%; }
-.msg.user { 
-    color: #fff; 
-    text-align: right; 
-    margin-left: auto;
-    border-right: 2px solid #fff;
-    padding-right: 10px;
-}
-.msg.model { 
-    color: var(--neon-green); 
-    border-left: 2px solid var(--neon-green);
-    padding-left: 10px;
-}
-.msg.system {
-    color: var(--warning-yellow);
-    text-align: center;
-    font-size: 0.8em;
-    max-width: 100%;
-}
-
-.inner-thought { 
-    color: #666; 
-    font-size: 0.85em; 
-    margin-top: 8px; 
-    padding-top: 5px;
-    border-top: 1px dotted #333;
-    font-style: italic;
-}
-
+/* 🟢 入力エリア */
 .input-area {
     display: flex;
-    margin-top: 20px;
+    margin-top: 15px;
     gap: 10px;
+    flex-shrink: 0; /* 入力欄が画面外へ消えるのを防ぐ */
 }
 
+/* キャラクターカード */
+.char-card {
+    border: 1px solid var(--neon-green);
+    background: #000;
+    display: flex;
+    align-items: center;
+    height: 80px;
+    cursor: pointer;
+    transition: 0.3s;
+    overflow: hidden;
+}
+
+.char-thumb {
+    width: 80px;
+    height: 80px;
+    border-right: 1px solid var(--neon-green);
+    flex-shrink: 0;
+}
+
+.char-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: sepia(1) hue-rotate(90deg) brightness(0.8);
+}
+
+.char-card:hover {
+    background: var(--dim-green);
+    box-shadow: 0 0 15px var(--neon-green);
+}
+
+.char-card:hover .char-thumb img {
+    filter: none;
+    brightness: 1.1;
+}
+
+/* メッセージ装飾 */
+.msg {
+    margin-bottom: 20px;
+    line-height: 1.6;
+    max-width: 90%;
+    word-wrap: break-word;
+}
+
+.msg.user {
+    color: #fff;
+    text-align: right;
+    margin-left: auto;
+    border-right: 2px solid #fff;
+    padding-right: 12px;
+}
+
+.msg.model {
+    color: var(--neon-green);
+    border-left: 2px solid var(--neon-green);
+    padding-left: 12px;
+}
+
+.inner-thought {
+    color: #666;
+    font-size: 0.85em;
+    margin-top: 8px;
+    font-style: italic;
+    border-top: 1px dotted #333;
+    padding-top: 5px;
+}
+
+/* 汎用コンポーネント */
 input[type="text"] {
     flex: 1;
     background: #000;
@@ -199,55 +210,41 @@ input[type="text"] {
     font-family: inherit;
 }
 
-input[type="text"]:focus {
-    outline: none;
-    box-shadow: 0 0 10px var(--neon-green);
-}
-
 button {
     background: var(--dim-green);
     color: var(--neon-green);
     border: 1px solid var(--neon-green);
-    padding: 10px 25px;
+    padding: 10px 20px;
     cursor: pointer;
     font-family: inherit;
     font-weight: bold;
-    text-transform: uppercase;
     transition: 0.2s;
 }
 
-button:hover { background: var(--neon-green); color: #000; }
-
-/* モーダル */
-.modal {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.9);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
-}
-.modal-content {
-    background: #000;
-    border: 2px solid var(--neon-green);
-    padding: 40px;
-    text-align: center;
-    box-shadow: 0 0 30px var(--dim-green);
+button:hover {
+    background: var(--neon-green);
+    color: #000;
 }
 
-#api-key-input {
-    width: 300px;
-    margin: 20px 0;
-    display: block;
+.danger-btn {
+    border-color: #ff4444;
+    color: #ff4444;
+    margin-top: 10px;
+    flex-shrink: 0;
 }
 
-.danger-btn { 
-    border-color: #ff4444; 
-    color: #ff4444; 
-    margin-top: auto; 
-}
 .danger-btn:hover {
     background: #ff4444;
     color: #fff;
+}
+
+/* スクロールバー設定 (Chrome/Safari) */
+#chat-log::-webkit-scrollbar,
+#evidence-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+#chat-log::-webkit-scrollbar-thumb,
+#evidence-list::-webkit-scrollbar-thumb {
+    background-color: var(--neon-green);
 }
