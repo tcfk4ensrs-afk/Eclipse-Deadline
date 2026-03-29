@@ -5,7 +5,7 @@
     --warning-yellow: #ffff00;
 }
 
-/* 画面全体の固定 */
+/* 画面全体の固定 (PC用) */
 body {
     background: var(--dark-bg);
     color: var(--neon-green);
@@ -17,7 +17,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden; /* 画面全体のスクロールを禁止 */
+    overflow: hidden; /* PCではスクロールさせない */
 }
 
 /* スキャンラインエフェクト */
@@ -49,7 +49,7 @@ body::after {
     box-shadow: inset 0 0 20px var(--dim-green);
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* パネル自体からはみ出さない */
+    overflow: hidden;
     box-sizing: border-box;
 }
 
@@ -60,8 +60,8 @@ body::after {
 }
 
 #evidence-list {
-    flex: 1; /* 証拠リストが余白を埋める */
-    overflow-y: auto; /* 証拠が増えたらここだけスクロール */
+    flex: 1;
+    overflow-y: auto;
     margin-bottom: 15px;
     padding-right: 5px;
 }
@@ -77,7 +77,7 @@ h3 {
     margin-top: 0;
     padding-bottom: 10px;
     letter-spacing: 2px;
-    flex-shrink: 0; /* 見出しは潰さない */
+    flex-shrink: 0;
 }
 
 /* メインメニュー (キャラ選択) */
@@ -97,10 +97,10 @@ h3 {
 
 /* --- 尋問ルーム (重要) --- */
 #interrogation-room {
-    display: none; /* JSでflexに切り替え */
+    display: none;
     flex-direction: column;
     height: 100%;
-    overflow: hidden; /* 内部パーツの制御 */
+    overflow: hidden;
 }
 
 .chat-header {
@@ -115,7 +115,7 @@ h3 {
 
 /* 🟢 チャットログエリア */
 #chat-log {
-    flex: 1; /* これにより入力欄を下に押しやり、自身が伸縮する */
+    flex: 1;
     overflow-y: auto;
     padding: 15px;
     border: 1px inset var(--neon-green);
@@ -130,7 +130,7 @@ h3 {
     display: flex;
     margin-top: 15px;
     gap: 10px;
-    flex-shrink: 0; /* 入力欄が画面外へ消えるのを防ぐ */
+    flex-shrink: 0;
 }
 
 /* キャラクターカード */
@@ -191,15 +191,6 @@ h3 {
     padding-left: 12px;
 }
 
-.inner-thought {
-    color: #666;
-    font-size: 0.85em;
-    margin-top: 8px;
-    font-style: italic;
-    border-top: 1px dotted #333;
-    padding-top: 5px;
-}
-
 /* 汎用コンポーネント */
 input[type="text"] {
     flex: 1;
@@ -238,7 +229,7 @@ button:hover {
     color: #fff;
 }
 
-/* スクロールバー設定 (Chrome/Safari) */
+/* スクロールバー設定 */
 #chat-log::-webkit-scrollbar,
 #evidence-list::-webkit-scrollbar {
     width: 6px;
@@ -247,4 +238,52 @@ button:hover {
 #chat-log::-webkit-scrollbar-thumb,
 #evidence-list::-webkit-scrollbar-thumb {
     background-color: var(--neon-green);
+}
+
+/* --------------------------------------------------
+   🟢 ここから追加：レスポンシブ対応 (スマートフォン/縦画面) 
+   -------------------------------------------------- */
+@media (max-width: 850px) {
+    body {
+        overflow-y: auto; /* 全体のスクロールを許可 */
+        height: auto;     /* 高さを内容に合わせる */
+        display: block;   /* 中央寄せを解除 */
+        padding: 10px;
+    }
+
+    .game-container {
+        flex-direction: column; /* 縦並びに変更 */
+        height: auto;
+        width: 100%;
+        gap: 15px;
+    }
+
+    .side-panel {
+        width: 100%;
+        height: auto;
+        flex-shrink: 0;
+    }
+
+    .main-panel {
+        width: 100%;
+        height: 75vh; /* 尋問エリアの高さをスマホ画面の75%に固定 */
+        min-height: 500px;
+    }
+
+    #evidence-list {
+        max-height: 250px; /* 証拠リストが伸びすぎないように制限 */
+    }
+
+    .char-grid {
+        grid-template-columns: 1fr; /* スマホではキャラ選択を1列に */
+    }
+
+    #interrogation-room {
+        height: 100%;
+    }
+
+    /* 入力エリアを最下部に留めるための余白 */
+    .input-area {
+        padding-bottom: 10px;
+    }
 }
