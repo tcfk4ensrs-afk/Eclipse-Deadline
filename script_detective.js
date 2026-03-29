@@ -47,7 +47,7 @@ class Game {
             this.renderCharacterList();
             this.updateEvidenceUI();
             
-            // Netlify環境ではフロントのAPIキーチェックは不要（メッセージのみ更新）
+            // Netlify環境ではフロントのAPIキーチェックは不要
             console.log("System Ready with Cloud Protocol.");
         } catch (e) {
             console.error("Init Error:", e);
@@ -206,7 +206,14 @@ class Game {
         div.className = `msg ${role}`;
         div.innerHTML = `<div>${outer}</div>`;
         log.appendChild(div);
-        log.scrollTop = log.scrollHeight;
+
+        // 🟢 スマホのキーボード描画ラグを考慮した自動スクロール
+        setTimeout(() => {
+            log.scrollTo({
+                top: log.scrollHeight,
+                behavior: 'smooth'
+            });
+        }, 50);
     }
 
     constructPrompt(char) {
@@ -234,7 +241,7 @@ class Game {
 
         const mySecret = gossipDatabase[char.id] || {};
 
-        // 🟢 ノア（engineer）専用の鉄壁ルールを追加
+        // 🟢 ノア（engineer）専用の鉄壁ルール
         let characterSpecificInstruction = "";
         if (char.id === 'engineer') {
             characterSpecificInstruction = `
