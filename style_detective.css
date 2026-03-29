@@ -244,46 +244,71 @@ button:hover {
    🟢 ここから追加：レスポンシブ対応 (スマートフォン/縦画面) 
    -------------------------------------------------- */
 @media (max-width: 850px) {
-    body {
-        overflow-y: auto; /* 全体のスクロールを許可 */
-        height: auto;     /* 高さを内容に合わせる */
-        display: block;   /* 中央寄せを解除 */
-        padding: 10px;
+    /* 1. 画面全体の「閉じ込め」を完全に解除 */
+    html, body {
+        overflow-y: auto !important; /* 強制的に縦スクロールを許可 */
+        overflow-x: hidden;
+        height: auto !important;     /* 100vhの縛りを捨てる */
+        min-height: 100vh;
+        display: block !important;   /* Flexによる中央寄せを解除 */
     }
 
+    /* 2. コンテナを「ただの箱」にする */
     .game-container {
-        flex-direction: column; /* 縦並びに変更 */
-        height: auto;
+        display: block !important;   /* GridやFlexを解除し、上から順に並べる */
         width: 100%;
-        gap: 15px;
+        height: auto !important;     /* 高さを内容に任せる */
+        padding: 10px;
+        gap: 0;                      /* 余白はmarginで制御する方が安全 */
     }
 
+    /* 3. 各パネルを縦に並べる */
+    .panel {
+        width: 100% !important;
+        height: auto !important;     /* パネル自体の高さ固定を解除 */
+        margin-bottom: 20px;
+        overflow: visible !important; /* 中身がはみ出してもスクロールできるように */
+    }
+
+    /* 4. 左パネル（証拠品）の設定 */
     .side-panel {
-        width: 100%;
-        height: auto;
-        flex-shrink: 0;
-    }
-
-    .main-panel {
-        width: 100%;
-        height: 75vh; /* 尋問エリアの高さをスマホ画面の75%に固定 */
-        min-height: 500px;
+        margin-bottom: 20px;
     }
 
     #evidence-list {
-        max-height: 250px; /* 証拠リストが伸びすぎないように制限 */
+        max-height: 300px;           /* 証拠が多すぎる時はこの中だけでスクロール */
+        overflow-y: auto;
     }
 
+    /* 5. 右パネル（尋問エリア）の設定 */
+    .main-panel {
+        /* チャットログが見えるよう、ここだけはある程度の高さを確保 */
+        height: 80vh !important; 
+        min-height: 500px;
+        position: relative;
+    }
+
+    /* 6. キャラクター選択 */
     .char-grid {
-        grid-template-columns: 1fr; /* スマホではキャラ選択を1列に */
+        grid-template-columns: 1fr;  /* 1列にする */
+        height: auto;
+        overflow: visible;
     }
 
+    /* 7. 尋問ルーム内部 */
     #interrogation-room {
-        height: 100%;
+        height: 100%;                /* main-panelの80vhに合わせる */
+        display: none;               /* JSでの制御用。表示時はflexになる */
     }
 
-    /* 入力エリアを最下部に留めるための余白 */
+    /* チャットログは入力欄を押し下げないよう、ここだけでスクロール */
+    #chat-log {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    /* 8. 入力エリア */
     .input-area {
-        padding-bottom: 10px;
+        padding-bottom: 30px;        /* 下端のボタンが隠れないよう広めに余白を取る */
     }
 }
