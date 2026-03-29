@@ -8,39 +8,47 @@
     <style>
         /* --- 画面全体の基本設定 --- */
         body { 
-            margin: 0; 
-            padding: 0; 
-            overflow: hidden; /* PCでは固定、スマホ版CSSで自動的に解除されます */
-        }
+    margin: 0; 
+    padding: 0; 
+    /* PCでは固定、スマホではスクロールを許可 */
+    overflow-x: hidden;
+    overflow-y: auto !important; 
+    height: auto !important;
+    min-height: 100vh;
+}
 
-        .game-container {
-            display: grid;
-            grid-template-columns: 320px 1fr;
-            gap: 15px;
-            width: 100vw;
-            height: 100vh;
-            padding: 10px;
-            box-sizing: border-box;
-        }
+.game-container {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 15px;
+    width: 100vw;
+    /* 🟢 height: 100vh をやめて min-height に変更 */
+    min-height: 100vh;
+    height: auto; 
+    padding: 10px;
+    box-sizing: border-box;
+}
 
-        /* スマホ用レイアウトの微調整（外部CSSと競合しないようoverflowを解除） */
-        @media (max-width: 850px) {
-            .game-container {
-                display: flex;
-                flex-direction: column;
-                height: auto; /* 高さを固定せず内容に合わせる */
-                overflow: visible; 
-            }
-            .side-panel { 
-                order: 2; 
-                width: 100%; 
-                height: auto;
-            }
-            .main-panel { 
-                order: 1; 
-                height: 75vh; 
-                min-height: 450px; 
-            }
+@media (max-width: 850px) {
+    .game-container {
+        display: flex;
+        flex-direction: column;
+        height: auto !important;
+        min-height: 100vh;
+        overflow: visible !important;
+    }
+    .side-panel { 
+        width: 100% !important; 
+        height: auto !important;
+        margin-bottom: 20px;
+    }
+    .main-panel { 
+        width: 100% !important;
+        /* チャットエリアの高さを確保しつつ、外側はスクロールさせる */
+        height: 70vh !important; 
+        min-height: 400px;
+    }
+}
         }
 
         /* --- メインパネルの内部レイアウト --- */
