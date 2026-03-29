@@ -2,20 +2,20 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GCC Terminal - Interrogation Phase</title>
     <link rel="stylesheet" href="style_detective.css">
     <style>
-        /* --- 基本レスポンシブ設定 --- */
+        /* --- 画面全体の基本設定 --- */
         body { 
             margin: 0; 
             padding: 0; 
-            overflow: hidden; /* 全体のスクロールを禁止 */
+            overflow: hidden; /* PCでは固定、スマホ版CSSで自動的に解除されます */
         }
 
         .game-container {
             display: grid;
-            grid-template-columns: 320px 1fr; /* PC用：左にパネル、右にメイン */
+            grid-template-columns: 320px 1fr;
             gap: 15px;
             width: 100vw;
             height: 100vh;
@@ -23,23 +23,23 @@
             box-sizing: border-box;
         }
 
-        /* スマホ用レイアウト */
+        /* スマホ用レイアウトの微調整（外部CSSと競合しないようoverflowを解除） */
         @media (max-width: 850px) {
             .game-container {
                 display: flex;
                 flex-direction: column;
-                height: 100vh;
-                overflow: hidden;
+                height: auto; /* 高さを固定せず内容に合わせる */
+                overflow: visible; 
             }
             .side-panel { 
                 order: 2; 
                 width: 100%; 
-                height: 30%; /* スマホ時は下部に証拠リスト */
+                height: auto;
             }
             .main-panel { 
                 order: 1; 
-                height: 70%; 
-                min-height: 300px; 
+                height: 75vh; 
+                min-height: 450px; 
             }
         }
 
@@ -47,7 +47,7 @@
         .main-panel {
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* パネル自体からはみ出さない */
+            overflow: hidden;
         }
 
         #main-menu {
@@ -56,7 +56,6 @@
             height: 100%;
         }
 
-        /* キャラ選択グリッドもスクロール可能に */
         .char-grid {
             flex-grow: 1;
             overflow-y: auto;
@@ -168,7 +167,6 @@
                     <h2>INTERROGATION PROTOCOL</h2>
                     <p style="font-size: 0.8rem;">[STATUS: CLOUD CONNECTION ACTIVE]</p>
                 </div>
-
                 <div id="character-list" class="char-grid"></div>
             </div>
 
